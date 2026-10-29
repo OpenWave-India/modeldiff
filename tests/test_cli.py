@@ -4,6 +4,7 @@ import json
 import socket
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -414,3 +415,26 @@ def test_replay_warns_only_for_ids_absent_from_full_suite(
     records = json.loads(result.read_text())["results"]
     assert len(records) == (1 if tags else 2)
     assert all(record["status"] == "pass" for record in records)
+
+
+def test_compare_junit_export(runs, tmp_path):
+    base, cand = runs
+    report = tmp_path / "reports" / "diff.xml"
+
+    assert main(
+        [
+            "compare",
+            str(base),
+            str(cand),
+            "--format",
+            "junit",
+            "-o",
+            str(report),
+        ]
+    ) == 1
+
+    root = ET.parse(report).getroot()
+
+    assert root.tag == "testsuite"
+    assert root.attrib["tests"] == "9"
+    assert int(root.attrib["failures"]) > 0

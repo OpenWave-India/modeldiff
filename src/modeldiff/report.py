@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import xml.etree.ElementTree as ET
 
 from modeldiff.compare import CaseComparison, Comparison
 from modeldiff.results import RunResult
 
 FORMATS = ("text", "markdown", "json")
-
+COMPARISON_FORMATS = (*FORMATS, "junit")
 
 def _ms(value: float | None) -> str:
     return "-" if value is None else f"{value:.1f} ms"
@@ -98,6 +99,8 @@ def _latency_lines(comp: Comparison) -> list[str]:
 def render_comparison(comp: Comparison, fmt: str = "text") -> str:
     if fmt == "json":
         return json.dumps(comp.to_dict(), indent=2, ensure_ascii=False)
+    if fmt == "junit":
+        return _render_junit(comp)
     if fmt == "markdown":
         return _render_markdown(comp)
     return _render_text(comp)
@@ -189,3 +192,88 @@ def _render_markdown(comp: Comparison) -> str:
     for note in comp.notes:
         lines.extend(["", f"> Note: {note}"])
     return "\n".join(lines)
+
+
+def _render_junit(comp: Comparison) -> str:
+    """Render a comparison as JUnit XML."""
+    root = ET.Element(
+        "testsuite",
+        {
+            "name": comp.suite,
+            "tests": str(len(comp.cases)),
+            "failures": "0",
+            "errors": "0",
+            "skipped": "0",
+        },
+    )
+
+    failures = 0
+    errors = 0
+    skipped = 0
+
+    for case in comp.cases:
+        attributes = {
+            "classname": comp.suite,
+            "name": case.case_id,
+        }
+
+        if case.candidate_duration_ms is not None:
+            seconds = max(case.candidate_duration_ms, 0) / 1000
+            attributes["time"] = f"{seconds:.6f}"
+
+        testcase = ET.SubElement(root, "testcase", attributes)
+
+
+        if case.category == "still_failing":
+            reason = case.candidate_reason or "Case is still failing"
+            element = ET.SubElement(
+                testcase,
+                "failure",
+                {"message": reason, "type": case.category},
+            )
+            element.text = reason
+            failures += 1
+
+        elif case.candidate_status == "error":
+            reason = case.candidate_reason or "Candidate case errored"
+            element = ET.SubElement(
+                testcase,
+                "error",
+                {"message": reason, "type": "error"},
+            )
+            element.text = reason
+            errors += 1
+
+        elif case.category == "regression" or case.candidate_status == "fail":
+            reason = case.candidate_reason or "Candidate case failed"
+            element = ET.SubElement(
+                testcase,
+                "failure",
+                {"message": reason, "type": case.category},
+            )
+            element.text = reason
+            failures += 1
+
+        elif case.category == "missing_in_candidate":
+            element = ET.SubElement(
+                testcase,
+                "skipped",
+                {"message": "Missing in candidate run"},
+            )
+            element.text = "No candidate result was available for this case."
+            skipped += 1
+
+        elif case.candidate_status is None:
+            ET.SubElement(
+                testcase,
+                "skipped",
+                {"message": "No candidate result available"},
+            )
+            skipped += 1
+
+
+    root.set("failures", str(failures))
+    root.set("errors", str(errors))
+    root.set("skipped", str(skipped))
+
+    return ET.tostring(root, encoding="unicode")
