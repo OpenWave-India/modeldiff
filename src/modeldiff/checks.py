@@ -164,7 +164,7 @@ def _unknown_options(case: TestCase, allowed: set[str]) -> list[str]:
 
 
 def _validate_exact(case: TestCase) -> list[str]:
-    problems = _unknown_options(case, {"strip", "ignore_case"})
+    problems = _unknown_options(case, {"strip", "ignore_case", "normalize_whitespace"})
     if not isinstance(case.expected, str):
         problems.append("'expected' must be a string for type 'exact'")
     return problems
@@ -173,6 +173,8 @@ def _validate_exact(case: TestCase) -> list[str]:
 def _normalize_text(text: str, options: dict[str, Any]) -> str:
     if options.get("strip", True):
         text = text.strip()
+    if options.get("normalize_whitespace", False):
+        text = re.sub(r"\s+", " ", text)
     if options.get("ignore_case", False):
         text = text.casefold()
     return text

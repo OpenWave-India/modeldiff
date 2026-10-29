@@ -158,6 +158,23 @@ def test_unknown_option_is_rejected():
     assert "unknown option(s) ignorecase" in problems[0]
 
 
+def test_exact_known_options_accepted():
+    s = parse_suite(
+        suite(
+            {
+                **EXACT,
+                "options": {
+                    "strip": True,
+                    "ignore_case": True,
+                    "normalize_whitespace": True,
+                },
+            }
+        ),
+        "test.yaml",
+    )
+    assert len(s.cases) == 1
+
+
 def test_json_rejects_invalid_extract_option_value():
     problems = problems_of(
         suite({"id": "j", "type": "json", "input": "x", "options": {"extract": "foo"}})

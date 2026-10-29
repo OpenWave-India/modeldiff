@@ -16,6 +16,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/101915083?v=4",
       "profile": "https://github.com/bfs2021",
       "contributions": ["code", "test"]
+    },
+    {
+      "login": "anant-rajj",
+      "name": "anant raj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/317772335?v=4",
+      "profile": "https://github.com/anant-rajj",
+      "contributions": ["code", "test", "doc"]
     }
   ]
 }

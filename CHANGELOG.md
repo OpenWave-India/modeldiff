@@ -4,6 +4,10 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+
+- `normalize_whitespace` option for `exact` checks: collapses runs of whitespace, including newlines, before comparing ([#16](https://github.com/OpenWave-India/modeldiff/pull/16), by [@anant-rajj](https://github.com/anant-rajj), fixes [#4](https://github.com/OpenWave-India/modeldiff/issues/4)).
+
 ## [0.1.0] - 2026-10-29
 
 First public release.

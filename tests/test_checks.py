@@ -31,6 +31,29 @@ def test_exact_reports_position_for_prefix(make_case):
     assert result.reason.endswith("character 3")
 
 
+def test_exact_normalize_whitespace(make_case):
+    case_without = make_case(type="exact", expected="Hello world")
+    assert not evaluate(case_without, "Hello\r\n  world").passed
+
+    case_with = make_case(
+        type="exact",
+        expected="Hello world",
+        options={"normalize_whitespace": True},
+    )
+    assert evaluate(case_with, "Hello\r\n  world").passed
+
+
+def test_exact_normalize_whitespace_reports_position_on_normalized_text(make_case):
+    case = make_case(
+        type="exact",
+        expected="Hello world",
+        options={"normalize_whitespace": True},
+    )
+    result = evaluate(case, "Hello\r\n  there")
+    assert not result.passed
+    assert result.reason == "output differs from expected at character 6"
+
+
 # --- json --------------------------------------------------------------------
 
 SCHEMA = {

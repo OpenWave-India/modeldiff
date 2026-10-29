@@ -159,12 +159,13 @@ Fields used by each type:
 
 | Type | Fields | Options |
 | --- | --- | --- |
-| `exact` | `expected` (string) | `strip` (default `true`), `ignore_case` (default `false`) |
+| `exact` | `expected` (string) | `strip` (default `true`), `ignore_case` (default `false`), `normalize_whitespace` (default `false`: collapses runs of whitespace including newlines into a single space; reported mismatch position refers to the normalized text) |
 | `json` | `schema` (JSON Schema, optional) | `extract` (`code_fence`, optional) |
 | `classification` | `expected` (label), `labels` (optional allowed set) | `normalize` (default `true`: strip and case-fold) |
 | `required_fields` | `required` (list of dotted paths), `values` (path: expected value) | `extract` (`code_fence`, optional) |
 | `tool_call` | `expected.name`, `expected.arguments`, `expected.arguments_schema` | `extract` (`code_fence`, optional) |
 | `custom` | `check` (registered name), `params` (any mapping) | none |
+
 
 Dotted paths address nested objects and list items: `customer.name`, `items.0.sku`.
 
@@ -383,6 +384,7 @@ Thanks to everyone who has contributed to ModelDiff. Contributors are added here
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bfs2021"><img src="https://avatars.githubusercontent.com/u/101915083?v=4?s=80" width="80px;" alt="bfs2021"/><br /><sub><b>bfs2021</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=bfs2021" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=bfs2021" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/anant-rajj"><img src="https://avatars.githubusercontent.com/u/317772335?v=4?s=80" width="80px;" alt="anant raj"/><br /><sub><b>anant raj</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=anant-rajj" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=anant-rajj" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=anant-rajj" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
