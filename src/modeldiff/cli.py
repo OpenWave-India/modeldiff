@@ -9,20 +9,22 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import copy
 import importlib
 import importlib.util
+import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from modeldiff._version import __version__
-from modeldiff.cases import load_suite
+from modeldiff.cases import SUITE_SCHEMA, load_suite
 from modeldiff.compare import compare_runs
-from modeldiff.config import CAPTURE_MODES, load_config
+from modeldiff.config import CAPTURE_MODES, CONFIG_SCHEMA, load_config
 from modeldiff.errors import ModelDiffError, ValidationError
 from modeldiff.providers import build_provider
 from modeldiff.report import FORMATS, render_comparison, render_run
-from modeldiff.results import load_run, save_run
+from modeldiff.results import RESULT_SCHEMA, load_run, save_run
 from modeldiff.runner import run_suite
 
 EXIT_OK, EXIT_REGRESSION, EXIT_INVALID = 0, 1, 2
@@ -112,6 +114,21 @@ def cmd_report(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+SCHEMAS = {"suite": SUITE_SCHEMA, "config": CONFIG_SCHEMA, "result": RESULT_SCHEMA}
+
+
+def cmd_schema(args: argparse.Namespace) -> int:
+    schema = copy.deepcopy(SCHEMAS[args.kind])
+    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
+    schema["title"] = {
+        "suite": "ModelDiff test suite",
+        "config": "ModelDiff run configuration",
+        "result": "ModelDiff run result",
+    }[args.kind]
+    _emit(json.dumps(schema, indent=2), args.output)
+    return EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="modeldiff", description="Regression testing for local AI models and configurations."
@@ -179,6 +196,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--format", "-f", choices=FORMATS, default="text")
     p.add_argument("--output", "-o", help="write the report to a file instead of stdout")
     p.set_defaults(func=cmd_report)
+
+    p = sub.add_parser("schema", help="print a JSON Schema for a ModelDiff file")
+    p.add_argument("kind", choices=sorted(SCHEMAS), help="schema to print")
+    p.add_argument("--output", "-o", help="write the schema to a file instead of stdout")
+    p.set_defaults(func=cmd_schema)
     return parser
 
 

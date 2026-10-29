@@ -4,9 +4,12 @@ import json
 import socket
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
+from modeldiff.cases import read_document
 from modeldiff.cli import main
 
 
@@ -44,6 +47,42 @@ def test_validate_without_plugin_explains_how_to_fix(quickstart, capsys):
     assert main(["validate", quickstart["suite"]]) == 2
     err = capsys.readouterr().err
     assert "custom check 'max_words' is not registered" in err and "--plugin" in err
+
+
+@pytest.mark.parametrize(
+    ("kind", "document"),
+    [
+        (
+            "suite",
+            {"suite": "example", "cases": [{"id": "greeting", "type": "exact", "input": "hi"}]},
+        ),
+        ("config", {"id": "replay", "provider": "replay", "outputs": "outputs.json"}),
+        (
+            "result",
+            {
+                "format": "modeldiff.run/v1",
+                "suite": "example",
+                "suite_sha256": "a" * 64,
+                "config": {"id": "replay", "provider": "replay"},
+                "started_at": "2026-01-01T00:00:00Z",
+                "results": [],
+            },
+        ),
+    ],
+)
+def test_schema_command_emits_valid_schema(kind, document, capsys):
+    assert main(["schema", kind]) == 0
+    schema = json.loads(capsys.readouterr().out)
+    Draft202012Validator.check_schema(schema)
+    assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    assert schema["title"].startswith("ModelDiff")
+    Draft202012Validator(schema).validate(document)
+
+
+def test_schema_suite_accepts_quickstart(quickstart, capsys):
+    assert main(["schema", "suite"]) == 0
+    schema = json.loads(capsys.readouterr().out)
+    Draft202012Validator(schema).validate(read_document(Path(quickstart["suite"])))
 
 
 def test_validate_invalid_file_exit_2(write_yaml, capsys):

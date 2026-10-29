@@ -259,6 +259,7 @@ modeldiff compare BASELINE CANDIDATE [--format text|markdown|json] [--output FIL
               [--latency-threshold PCT] [--min-latency-delta MS] [--fail-on-latency]
               [--allow-suite-mismatch] [--exit-zero]
 modeldiff report RESULTS [--format text|markdown|json] [--output FILE]
+modeldiff schema {suite,config,result} [--output FILE]
 ```
 
 | Exit code | Meaning |
@@ -268,6 +269,28 @@ modeldiff report RESULTS [--format text|markdown|json] [--output FILE]
 | 2 | Invalid input: malformed suite, config, or result file, or bad arguments. |
 
 `compare` refuses to compare runs of different suites. If the case definitions differ (the `suite_sha256` in the result files does not match), it also refuses unless you pass `--allow-suite-mismatch`. `python -m modeldiff` works the same as `modeldiff`.
+
+### JSON Schemas and editor support
+
+ModelDiff keeps the schemas used by the loader available through the CLI. Print one to
+stdout or save it to a file:
+
+```bash
+modeldiff schema suite > suite.schema.json
+modeldiff schema config -o config.schema.json
+modeldiff schema result -o result.schema.json
+```
+
+The `suite` schema can be used with the VS Code YAML extension by putting this comment at
+the top of a suite file (adjust the path as needed):
+
+```yaml
+# yaml-language-server: $schema=./suite.schema.json
+suite: support-assistant
+cases: []
+```
+
+Each emitted schema includes its JSON Schema draft identifier and a descriptive `title`.
 
 ### In CI
 
@@ -365,7 +388,6 @@ These are ideas, not commitments. See the issue tracker for what is being worked
 - Repeated runs per case, with variance reported, to separate noise from change.
 - A chat/messages input format and a provider for OpenAI-compatible local servers (llama.cpp, vLLM, LM Studio).
 - JUnit XML output for CI systems.
-- A JSON Schema for result files, published alongside the code.
 
 ## Contributing
 
