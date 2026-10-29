@@ -41,6 +41,7 @@ modeldiff compare out/b.json out/c.json
 - **Keep it small.** Prefer the standard library. A new dependency needs a reason in `docs/architecture.md`, and should be an optional extra if only one feature uses it.
 - **Type hints** on public functions and classes.
 - **Documentation.** Update the README when you change CLI flags, file formats, or check behavior.
+- **File-format reference.** See [docs/file-formats.md](docs/file-formats.md) for the documented fields and compatibility details of ModelDiff's file formats.
 - **Accurate claims.** Do not describe features, metrics, or benchmarks that the code does not implement.
 
 ## Picking up an issue

@@ -199,6 +199,8 @@ Load the checks with `--plugin my_checks.py`, or with `--plugin package.module` 
 
 ## Run configurations
 
+For a field-by-field reference to suite files, run configurations, recorded outputs, run results, and comparison JSON, see [File formats](docs/file-formats.md).
+
 A config describes one side of a comparison.
 
 ```yaml
