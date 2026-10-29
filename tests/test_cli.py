@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -414,3 +415,50 @@ def test_replay_warns_only_for_ids_absent_from_full_suite(
     records = json.loads(result.read_text())["results"]
     assert len(records) == (1 if tags else 2)
     assert all(record["status"] == "pass" for record in records)
+
+
+def test_redirected_stdout_is_utf8_with_non_ascii_report(tmp_path):
+    """A non-ASCII report must not crash when stdout is redirected (GH-24).
+
+    With ``PYTHONIOENCODING`` forced to a non-UTF-8 code page, Python would
+    encode redirected stdout with cp1252 and raise ``UnicodeEncodeError`` on
+    Hindi text. The CLI must reconfigure its streams to UTF-8 and exit 0.
+    """
+    suite = tmp_path / "suite.yaml"
+    suite.write_text(
+        "suite: hindi\n"
+        "cases:\n"
+        "  - id: sentiment-hi\n"
+        "    type: classification\n"
+        '    input: "भावना बताइए"\n'
+        "    expected: सकारात्मक\n"
+        "    labels: [सकारात्मक, नकारात्मक]\n",
+        encoding="utf-8",
+    )
+    outputs = tmp_path / "out.json"
+    outputs.write_text(json.dumps({"outputs": {"sentiment-hi": "नकारात्मक"}}), encoding="utf-8")
+    config = tmp_path / "cfg.yaml"
+    config.write_text("id: hi\nprovider: replay\noutputs: out.json\n", encoding="utf-8")
+
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "cp1252"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "modeldiff",
+            "run",
+            str(suite),
+            "-c",
+            str(config),
+            "-o",
+            str(tmp_path / "r.json"),
+        ],
+        capture_output=True,
+        env=env,
+        cwd=tmp_path,
+    )
+    assert proc.returncode == 0, proc.stderr.decode("utf-8", errors="replace")
+    stdout = proc.stdout.decode("utf-8")
+    assert "Results written to" in stdout
+    assert "नकारात्मक" in stdout

@@ -132,7 +132,7 @@ def cmd_schema(args: argparse.Namespace) -> int:
     schema["title"] = {
         "suite": "ModelDiff test suite",
         "config": "ModelDiff run configuration",
-        "result": "ModelDiff run result",
+        "result": "ModelDiff result file",
     }[args.kind]
     _emit(json.dumps(schema, indent=2), args.output)
     return EXIT_OK
@@ -213,7 +213,28 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _reconfigure_streams() -> None:
+    """Force UTF-8 on stdout/stderr so non-ASCII reports survive redirection.
+
+    On Windows, when stdout is piped or redirected to a file, Python encodes
+    it with the system code page (for example cp1252). Reports that contain
+    Hindi, Tamil or emoji then crash with ``UnicodeEncodeError`` even when
+    there are no regressions. Files written with ``--output`` already use
+    UTF-8; reconfigure the text streams so the console path matches.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except (AttributeError, ValueError):
+                # Non-file streams (for example pytest capture objects) may
+                # reject reconfiguration; leave them untouched.
+                pass
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _reconfigure_streams()
     parser = build_parser()
     args = parser.parse_args(argv)
     if getattr(args, "latency_threshold", None) is not None and args.latency_threshold < 0:
