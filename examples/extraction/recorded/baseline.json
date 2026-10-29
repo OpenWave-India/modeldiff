@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "note": "Hand-written fixture outputs for the structured-extraction example. Not produced by a real model."
+  },
+  "outputs": {
+    "invoice-json": {
+      "output": "{\"invoice_id\": \"INV-1042\", \"vendor\": \"Northwind Supplies\", \"total\": 1250, \"currency\": \"USD\"}",
+      "latency_ms": 510
+    },
+    "billing-address": {
+      "output": "{\"customer\": {\"name\": \"Sana Khan\"}, \"address\": {\"line1\": \"14 Canal Road\", \"city\": \"Lahore\", \"postal_code\": \"54000\"}}",
+      "latency_ms": 430
+    },
+    "payment-status": {"output": "{\"status\": \"paid\"}", "latency_ms": 180}
+  }
+}

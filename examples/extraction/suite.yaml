@@ -1,0 +1,40 @@
+suite: invoice-extraction
+description: >
+  Example regression suite for extracting structured invoice and address data.
+  The outputs in recorded/ are hand-written fixtures; they were not produced by a real model.
+cases:
+  - id: invoice-json
+    type: json
+    input: |
+      Extract this invoice as JSON with invoice_id, vendor, total, currency, and notes:
+      Invoice INV-1042 from Northwind Supplies totals 1250 USD. Paid by card.
+    schema:
+      type: object
+      required: [invoice_id, vendor, total, currency]
+      properties:
+        invoice_id: {type: string}
+        vendor: {type: string}
+        total: {type: number, exclusiveMinimum: 0}
+        currency: {enum: [USD, EUR, GBP]}
+        notes: {type: string}
+      additionalProperties: false
+    tags: [structured, invoice]
+  - id: billing-address
+    type: required_fields
+    input: |
+      Extract the billing address from this invoice: Sana Khan, 14 Canal Road, Lahore, 54000.
+    required: [customer.name, address.line1, address.city, address.postal_code]
+    values:
+      address.city: Lahore
+    tags: [structured, address]
+  - id: payment-status
+    type: json
+    input: "Extract the payment status and optional payment method for invoice INV-1042."
+    schema:
+      type: object
+      required: [status]
+      properties:
+        status: {const: paid}
+        method: {type: string}
+      additionalProperties: false
+    tags: [structured, invoice]

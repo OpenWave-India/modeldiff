@@ -4,10 +4,13 @@ import json
 import socket
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 from modeldiff.cli import main
+
+EXTRACTION = Path(__file__).resolve().parents[1] / "examples" / "extraction"
 
 
 @pytest.fixture
@@ -179,6 +182,45 @@ def test_compare_detects_quickstart_regressions(runs, capsys):
     for case_id in ("ticket-json", "ticket-required-fields", "intent-billing", "tool-lookup"):
         assert f"{case_id} [" in out
     assert "sentiment-positive: 'neutral' -> 'positive'" in out
+
+
+def test_extraction_example_reports_regressions_and_behavior_change(tmp_path, capsys):
+    baseline = tmp_path / "extraction-baseline.json"
+    candidate = tmp_path / "extraction-candidate.json"
+    assert main(["validate", str(EXTRACTION / "suite.yaml")]) == 0
+    assert (
+        main(
+            [
+                "run",
+                str(EXTRACTION / "suite.yaml"),
+                "--config",
+                str(EXTRACTION / "configs" / "baseline.yaml"),
+                "--output",
+                str(baseline),
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "run",
+                str(EXTRACTION / "suite.yaml"),
+                "--config",
+                str(EXTRACTION / "configs" / "candidate.yaml"),
+                "--output",
+                str(candidate),
+            ]
+        )
+        == 0
+    )
+    assert main(["compare", str(baseline), str(candidate)]) == 1
+    out = capsys.readouterr().out
+    assert "REGRESSIONS FOUND (2)" in out
+    assert "invoice-json [json] pass -> fail" in out
+    assert "billing-address [required_fields] pass -> fail" in out
+    assert "Passing with changed output (review, not a regression) (1)" in out
+    assert "payment-status [json] pass -> pass" in out
 
 
 def test_compare_same_run_has_no_regressions(runs):

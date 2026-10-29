@@ -135,6 +135,29 @@ modeldiff compare out/baseline.json out/candidate.json --format markdown --outpu
 ...
 ```
 
+### Structured extraction example
+
+The `examples/extraction` suite demonstrates invoice and address extraction with
+JSON Schema and required-field checks. Its baseline and candidate outputs are
+hand-written replay fixtures, so the workflow is deterministic and needs no
+model or network access:
+
+```bash
+modeldiff validate examples/extraction/suite.yaml
+modeldiff run examples/extraction/suite.yaml \
+  --config examples/extraction/configs/baseline.yaml \
+  --output out/extraction-baseline.json
+modeldiff run examples/extraction/suite.yaml \
+  --config examples/extraction/configs/candidate.yaml \
+  --output out/extraction-candidate.json
+modeldiff compare out/extraction-baseline.json out/extraction-candidate.json
+```
+
+The candidate intentionally removes the invoice total and changes the billing
+city, producing regressions for `invoice-json` and `billing-address`. It also
+adds a valid payment-method field to `payment-status`, which is reported as a
+passing output change rather than a regression.
+
 ## Writing test cases
 
 ```yaml

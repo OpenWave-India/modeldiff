@@ -1,0 +1,7 @@
+# Replays a hand-written baseline; no model or network needed.
+id: extraction-baseline
+provider: replay
+outputs: ../recorded/baseline.json
+capture_output: full
+metadata:
+  description: Baseline fixture for the structured-extraction example.

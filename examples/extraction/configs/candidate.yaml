@@ -1,0 +1,7 @@
+# Replays a hand-written candidate; no model or network needed.
+id: extraction-candidate
+provider: replay
+outputs: ../recorded/candidate.json
+capture_output: full
+metadata:
+  description: Candidate fixture with two regressions and one changed passing output.
