@@ -13,6 +13,7 @@ from a suite with ``type: custom`` and ``check: <name>``.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -22,6 +23,11 @@ import jsonschema
 from modeldiff.cases import TestCase
 
 MAX_REPORTED_SCHEMA_ERRORS = 5
+
+_CODE_FENCE_RE = re.compile(
+    r"^[ \t]*```[^\n`]*\r?\n(.*?)\r?\n[ \t]*```\s*$",
+    re.DOTALL | re.MULTILINE,
+)
 
 
 @dataclass
@@ -84,6 +90,22 @@ def _parse_json(output: str) -> tuple[Any, CheckResult | None]:
     except json.JSONDecodeError as exc:
         reason = f"output is not valid JSON (line {exc.lineno}, column {exc.colno}: {exc.msg})"
         return None, CheckResult(False, reason)
+
+
+def _extract_output(output: str, options: dict[str, Any]) -> str:
+    if options.get("extract") == "code_fence":
+        matches = _CODE_FENCE_RE.findall(output)
+        if len(matches) == 1:
+            return matches[0]
+    return output
+
+
+def _validate_extract(case: TestCase) -> list[str]:
+    if "extract" in case.options and case.options["extract"] != "code_fence":
+        return [
+            f"invalid value {case.options['extract']!r} for option 'extract' (supported: code_fence)"
+        ]
+    return []
 
 
 def _schema_problems(schema: Any, label: str) -> list[str]:
@@ -172,14 +194,14 @@ def _eval_exact(case: TestCase, output: str) -> CheckResult:
 
 
 def _validate_json(case: TestCase) -> list[str]:
-    problems = _unknown_options(case, set())
+    problems = _unknown_options(case, {"extract"}) + _validate_extract(case)
     if case.schema is not None:
         problems += _schema_problems(case.schema, "'schema'")
     return problems
 
 
 def _eval_json(case: TestCase, output: str) -> CheckResult:
-    data, failure = _parse_json(output)
+    data, failure = _parse_json(_extract_output(output, case.options))
     if failure:
         return failure
     if case.schema is not None:
@@ -243,14 +265,14 @@ def json_equal(a: Any, b: Any) -> bool:
 
 
 def _validate_required_fields(case: TestCase) -> list[str]:
-    problems = _unknown_options(case, set())
+    problems = _unknown_options(case, {"extract"}) + _validate_extract(case)
     if not case.required and not case.values:
         problems.append("type 'required_fields' needs 'required', 'values', or both")
     return problems
 
 
 def _eval_required_fields(case: TestCase, output: str) -> CheckResult:
-    data, failure = _parse_json(output)
+    data, failure = _parse_json(_extract_output(output, case.options))
     if failure:
         return failure
     missing = [p for p in case.required or [] if lookup_path(data, p) is _MISSING]
@@ -276,7 +298,7 @@ def _eval_required_fields(case: TestCase, output: str) -> CheckResult:
 
 
 def _validate_tool_call(case: TestCase) -> list[str]:
-    problems = _unknown_options(case, set())
+    problems = _unknown_options(case, {"extract"}) + _validate_extract(case)
     exp = case.expected
     if not isinstance(exp, dict) or not isinstance(exp.get("name"), str):
         return problems + ["'expected' must be a mapping with a string 'name' for type 'tool_call'"]
@@ -321,9 +343,10 @@ def normalize_tool_call(data: Any) -> tuple[dict[str, Any] | None, str | None]:
 
 
 def _eval_tool_call(case: TestCase, output: str) -> CheckResult:
-    data, failure = _parse_json(output)
+    data, failure = _parse_json(_extract_output(output, case.options))
     if failure:
         return failure
+
     call, problem = normalize_tool_call(data)
     if call is None:
         return CheckResult(False, problem)

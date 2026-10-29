@@ -160,15 +160,18 @@ Fields used by each type:
 | Type | Fields | Options |
 | --- | --- | --- |
 | `exact` | `expected` (string) | `strip` (default `true`), `ignore_case` (default `false`) |
-| `json` | `schema` (JSON Schema, optional) | none |
+| `json` | `schema` (JSON Schema, optional) | `extract` (`code_fence`, optional) |
 | `classification` | `expected` (label), `labels` (optional allowed set) | `normalize` (default `true`: strip and case-fold) |
-| `required_fields` | `required` (list of dotted paths), `values` (path: expected value) | none |
-| `tool_call` | `expected.name`, `expected.arguments`, `expected.arguments_schema` | none |
+| `required_fields` | `required` (list of dotted paths), `values` (path: expected value) | `extract` (`code_fence`, optional) |
+| `tool_call` | `expected.name`, `expected.arguments`, `expected.arguments_schema` | `extract` (`code_fence`, optional) |
 | `custom` | `check` (registered name), `params` (any mapping) | none |
 
 Dotted paths address nested objects and list items: `customer.name`, `items.0.sku`.
 
+`options: {extract: code_fence}` extracts content from a single Markdown code fence (e.g. ```` ```json ... ``` ````) before parsing. If the output does not contain exactly one fenced block, the whole output is parsed.
+
 `values` and `expected.arguments` compare by JSON type: a boolean never equals a number, so `true` does not match `1`, while `1` and `1.0` are equal. Nested objects and lists compare the same way.
+
 
 `tool_call` accepts these output shapes: `{"name", "arguments"}`, `{"function": {"name", "arguments"}}` (arguments may be a JSON string), and `{"tool_calls": [...]}` or a list containing exactly one call.
 

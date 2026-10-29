@@ -68,6 +68,33 @@ def test_json_schema_error_list_is_truncated(make_case):
     assert "... and 2 more" in result.reason
 
 
+def test_json_extract_code_fence(make_case):
+    case = make_case(type="json", options={"extract": "code_fence"})
+    assert evaluate(case, '```json\n{"a":1}\n```').passed
+    assert evaluate(case, '```\n{"a":1}\n```').passed
+    assert evaluate(case, 'Here is the result:\n```json\n{"a":1}\n```\nDone.').passed
+    assert evaluate(case, '{"a": 1}').passed
+    # Multiple fenced blocks fall back to parsing the whole output
+    multi = '```json\n{"a": 1}\n```\n```json\n{"b": 2}\n```'
+    assert not evaluate(case, multi).passed
+
+
+def test_required_fields_and_tool_call_extract_code_fence(make_case):
+    rf_case = make_case(
+        type="required_fields",
+        required=["user.name"],
+        options={"extract": "code_fence"},
+    )
+    assert evaluate(rf_case, '```json\n{"user": {"name": "a"}}\n```').passed
+
+    tc_case = make_case(
+        type="tool_call",
+        expected={"name": "get", "arguments": {"id": "1"}},
+        options={"extract": "code_fence"},
+    )
+    assert evaluate(tc_case, '```json\n{"name": "get", "arguments": {"id": "1"}}\n```').passed
+
+
 # --- classification ----------------------------------------------------------
 
 

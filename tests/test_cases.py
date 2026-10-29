@@ -158,6 +158,22 @@ def test_unknown_option_is_rejected():
     assert "unknown option(s) ignorecase" in problems[0]
 
 
+def test_json_rejects_invalid_extract_option_value():
+    problems = problems_of(
+        suite({"id": "j", "type": "json", "input": "x", "options": {"extract": "foo"}})
+    )
+    assert any(
+        "invalid value 'foo' for option 'extract' (supported: code_fence)" in p for p in problems
+    )
+
+
+def test_json_accepts_code_fence_extract_option():
+    s = parse_suite(
+        suite({"id": "j", "type": "json", "input": "x", "options": {"extract": "code_fence"}})
+    )
+    assert s.cases[0].options == {"extract": "code_fence"}
+
+
 def test_required_fields_needs_something_to_check():
     problems = problems_of(suite({"id": "r", "type": "required_fields", "input": "x"}))
     assert "needs 'required', 'values', or both" in problems[0]
