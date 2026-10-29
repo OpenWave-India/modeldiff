@@ -158,6 +158,23 @@ def test_unknown_option_is_rejected():
     assert "unknown option(s) ignorecase" in problems[0]
 
 
+def test_exact_known_options_accepted():
+    s = parse_suite(
+        suite(
+            {
+                **EXACT,
+                "options": {
+                    "strip": True,
+                    "ignore_case": True,
+                    "normalize_whitespace": True,
+                },
+            }
+        ),
+        "test.yaml",
+    )
+    assert len(s.cases) == 1
+
+
 def test_required_fields_needs_something_to_check():
     problems = problems_of(suite({"id": "r", "type": "required_fields", "input": "x"}))
     assert "needs 'required', 'values', or both" in problems[0]
