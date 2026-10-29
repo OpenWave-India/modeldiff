@@ -118,6 +118,21 @@ def test_required_fields_values(make_case):
     assert result.reason == "wrong value(s): status='error' (expected 'ok')"
 
 
+def test_required_fields_values_compare_json_types(make_case):
+    # Regression: Python says True == 1 and 1 == 1.0, JSON does not.
+    case = make_case(type="required_fields", values={"active": True, "qty": 1.0})
+    assert evaluate(case, '{"active": true, "qty": 1}').passed
+    result = evaluate(case, '{"active": 1, "qty": 1}')
+    assert result.reason == "wrong value(s): active=1 (expected True)"
+    assert not evaluate(case, '{"active": false, "qty": 1}').passed
+
+
+def test_required_fields_values_strict_types_are_recursive(make_case):
+    case = make_case(type="required_fields", values={"items": [{"active": True}]})
+    assert evaluate(case, '{"items": [{"active": true}]}').passed
+    assert not evaluate(case, '{"items": [{"active": 1}]}').passed
+
+
 def test_required_fields_path_in_both_lists_reported_once(make_case):
     # Regression: a path in both `required` and `values` was listed twice.
     case = make_case(type="required_fields", required=["city"], values={"city": "Pune"})
@@ -164,6 +179,13 @@ def test_tool_call_argument_differences_are_listed(make_case):
     case = make_case(type="tool_call", expected={"name": "f", "arguments": {"id": "7", "x": 1}})
     result = evaluate(case, '{"name": "f", "arguments": {"id": 7, "y": 2}}')
     assert result.reason == "tool arguments differ: id=7 (expected '7'), x missing, y unexpected"
+
+
+def test_tool_call_arguments_compare_json_types(make_case):
+    case = make_case(type="tool_call", expected={"name": "f", "arguments": {"qty": 1}})
+    assert evaluate(case, '{"name": "f", "arguments": {"qty": 1.0}}').passed
+    result = evaluate(case, '{"name": "f", "arguments": {"qty": true}}')
+    assert result.reason == "tool arguments differ: qty=True (expected 1)"
 
 
 def test_tool_call_argument_schema(make_case):

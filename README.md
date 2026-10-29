@@ -164,6 +164,8 @@ Fields used by each type:
 
 Dotted paths address nested objects and list items: `customer.name`, `items.0.sku`.
 
+`values` and `expected.arguments` compare by JSON type: a boolean never equals a number, so `true` does not match `1`, while `1` and `1.0` are equal. Nested objects and lists compare the same way.
+
 `tool_call` accepts these output shapes: `{"name", "arguments"}`, `{"function": {"name", "arguments"}}` (arguments may be a JSON string), and `{"tool_calls": [...]}` or a list containing exactly one call.
 
 ### Custom checks

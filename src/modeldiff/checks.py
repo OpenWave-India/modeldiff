@@ -220,6 +220,25 @@ def _eval_classification(case: TestCase, output: str) -> CheckResult:
     return CheckResult(True, None, details)
 
 
+def json_equal(a: Any, b: Any) -> bool:
+    """Compare two JSON values by type and value.
+
+    Python's ``==`` says ``True == 1`` and ``1 == 1.0``; JSON does not. A
+    boolean is never equal to a number, while an integer and a float with the
+    same value are equal because JSON does not distinguish them. Dicts and
+    lists are compared recursively.
+    """
+    if isinstance(a, bool) or isinstance(b, bool):
+        return isinstance(a, bool) and isinstance(b, bool) and a == b
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        return a == b
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(json_equal(a[key], b[key]) for key in a)
+    if isinstance(a, list) and isinstance(b, list):
+        return len(a) == len(b) and all(json_equal(x, y) for x, y in zip(a, b, strict=True))
+    return a == b
+
+
 # --- required_fields ---------------------------------------------------------
 
 
@@ -241,7 +260,7 @@ def _eval_required_fields(case: TestCase, output: str) -> CheckResult:
         if actual is _MISSING:
             if path not in missing:  # a path may be listed in both `required` and `values`
                 missing.append(path)
-        elif actual != expected:
+        elif not json_equal(actual, expected):
             mismatched.append(f"{path}={actual!r} (expected {expected!r})")
     reasons = []
     if missing:
@@ -314,7 +333,7 @@ def _eval_tool_call(case: TestCase, output: str) -> CheckResult:
         return CheckResult(
             False, f"called tool {call['name']!r}, expected {exp['name']!r}", details
         )
-    if "arguments" in exp and call["arguments"] != exp["arguments"]:
+    if "arguments" in exp and not json_equal(call["arguments"], exp["arguments"]):
         got, want = call["arguments"], exp["arguments"]
         diffs = []
         for key in sorted(set(got) | set(want)):
@@ -322,7 +341,7 @@ def _eval_tool_call(case: TestCase, output: str) -> CheckResult:
                 diffs.append(f"{key} missing")
             elif key not in want:
                 diffs.append(f"{key} unexpected")
-            elif got[key] != want[key]:
+            elif not json_equal(got[key], want[key]):
                 diffs.append(f"{key}={got[key]!r} (expected {want[key]!r})")
         return CheckResult(False, "tool arguments differ: " + ", ".join(diffs), details)
     if "arguments_schema" in exp:
