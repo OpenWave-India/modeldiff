@@ -26,6 +26,18 @@ def test_exact_ignore_case_and_no_strip(make_case):
     assert not evaluate(case, "HELLO ").passed
 
 
+def test_exact_normalizes_whitespace_when_requested(make_case):
+    case = make_case(type="exact", expected="Hello world", options={"normalize_whitespace": True})
+    assert evaluate(case, "Hello\r\n  world").passed
+    assert not evaluate(make_case(type="exact", expected="Hello world"), "Hello\r\n  world").passed
+
+
+def test_exact_reports_position_after_whitespace_normalization(make_case):
+    case = make_case(type="exact", expected="Hello there", options={"normalize_whitespace": True})
+    result = evaluate(case, "Hello world")
+    assert result.reason.endswith("character 6")
+
+
 def test_exact_reports_position_for_prefix(make_case):
     result = evaluate(make_case(type="exact", expected="abc"), "abcdef")
     assert result.reason.endswith("character 3")

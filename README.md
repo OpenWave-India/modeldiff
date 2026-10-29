@@ -155,7 +155,7 @@ Fields used by each type:
 
 | Type | Fields | Options |
 | --- | --- | --- |
-| `exact` | `expected` (string) | `strip` (default `true`), `ignore_case` (default `false`) |
+| `exact` | `expected` (string) | `strip` (default `true`), `ignore_case` (default `false`), `normalize_whitespace` (default `false`: collapse whitespace runs to one space before comparing) |
 | `json` | `schema` (JSON Schema, optional) | none |
 | `classification` | `expected` (label), `labels` (optional allowed set) | `normalize` (default `true`: strip and case-fold) |
 | `required_fields` | `required` (list of dotted paths), `values` (path: expected value) | none |
