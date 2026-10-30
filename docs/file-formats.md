@@ -96,7 +96,7 @@ The complete example suite includes all six case types. Its recorded outputs are
 
 ### Suite hash
 
-ModelDiff calculates `suite_sha256` from normalized case definitions. It serializes the cases with sorted JSON keys and compact separators, then computes SHA-256 over the UTF-8 bytes. Formatting and comments in the source YAML/JSON do not affect this hash. The hash is used to check whether two runs used the same case definitions.
+ModelDiff calculates `suite_sha256` from normalized case definitions. It serializes the cases with sorted JSON keys and compact separators, then computes SHA-256 over the UTF-8 bytes. Formatting and comments in the source YAML/JSON do not affect this hash. The suite hash is the compatibility check for older result files. New runs also store `case_sha256` per case, using the same normalization and hashing a single case object. When all case results in both runs have these hashes, comparison checks shared cases individually, allowing tagged subsets and naming changed cases. Missing per-case hashes in either run fall back to the suite-level check.
 
 ## 2. Run configuration file
 
@@ -243,6 +243,7 @@ Optional case-result fields:
 | `reason` | string or null | No | Explanation of the check result, when available. |
 | `output` | string or null | No | Captured output text. May be null or absent depending on capture mode. |
 | `output_sha256` | string or null | No | SHA-256 hash of the output when captured. |
+| `case_sha256` | string or null | No | SHA-256 hash of this normalized case definition. New runs write it, including provider-error results. Older files without it still load. |
 | `duration_ms` | number or null | No | Duration in milliseconds; if numeric, must be non-negative. |
 | `duration_source` | `measured`, `recorded`, or null | No | Whether duration was measured around the provider call or supplied by a recorded-output entry. |
 | `memory` | object or null | No | Memory measurements when available. |

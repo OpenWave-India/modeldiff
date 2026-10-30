@@ -178,3 +178,26 @@ def test_load_ignores_unknown_fields_for_forward_compatibility():
     data["extra_run_field"] = 1
     data["results"][0]["extra_case_field"] = 2
     assert RunResult.from_dict(data).results[0].case_id == "a"
+
+
+def test_case_hashes_survive_save_load_and_cover_provider_errors(tmp_path):
+    result = run({"a": "yes", "c": "{}"})
+    path = tmp_path / "run.json"
+    save_run(result, path)
+    loaded = load_run(path)
+    assert [r.case_sha256 for r in loaded.results] == [c.sha256 for c in SUITE.cases]
+    assert loaded.by_id()["b"].status == "error"
+
+
+def test_case_hash_is_optional_for_older_files():
+    data = run({"a": "yes", "b": "pos", "c": "{}"}).to_dict()
+    for result in data["results"]:
+        result.pop("case_sha256", None)
+    assert all(result.case_sha256 is None for result in RunResult.from_dict(data).results)
+
+
+def test_invalid_case_hash_is_rejected():
+    data = run({"a": "yes", "b": "pos", "c": "{}"}).to_dict()
+    data["results"][0]["case_sha256"] = "not-a-hash"
+    with pytest.raises(ValidationError, match="case_sha256"):
+        RunResult.from_dict(data)

@@ -321,7 +321,8 @@ modeldiff validate suites/support.yaml suites/billing.yaml --plugin checks.py
 
 Comparison reports show candidate per-case warnings, with `(new)` marking warnings absent from the baseline. JSON comparisons include `baseline_warnings` and `candidate_warnings` for every case. Warnings do not change regression counts or exit codes.
 
-`compare` refuses to compare runs of different suites. If the case definitions differ (the `suite_sha256` in the result files does not match), it also refuses unless you pass `--allow-suite-mismatch`. `python -m modeldiff` works the same as `modeldiff`.
+
+`compare` refuses to compare runs of different suites. New result files store a `case_sha256` for each case, so a full run and a `--tag` subset can be compared: cases left out are reported as missing. Changed definitions are rejected with the affected case IDs unless you pass `--allow-suite-mismatch`. If either run lacks any per-case hashes, comparison keeps the older `suite_sha256` check instead. `python -m modeldiff` works the same as `modeldiff`.
 
 ### JSON Schemas and editor support
 
@@ -453,6 +454,7 @@ To give everyone a chance, especially people making their first contribution:
 - Work on **one issue at a time**. Claim the next one after your pull request is merged.
 - Issues labelled `good first issue` are for **first-time contributors**. After your first merged pull request, please leave them for newcomers and pick `help wanted` or other issues instead.
 - Pull requests for issues that weren't assigned to you, or beyond the one-at-a-time limit, may be closed so others can take the issue.
+- If there's no update on an assigned issue for **7 days**, a maintainer may unassign it so someone else can take it. If you need more time, just comment on the issue.
 
 If ModelDiff is useful to you, a star on the repository helps other people find it. For project news, follow [OpenWave India on LinkedIn](https://www.linkedin.com/company/openwave-india).
 

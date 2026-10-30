@@ -159,16 +159,35 @@ def compare_runs(
     problems = []
     if baseline.suite != candidate.suite:
         problems.append(f"suite names differ: {baseline.suite!r} vs {candidate.suite!r}")
-    mismatch = baseline.suite_sha256 != candidate.suite_sha256
+    base_by_id, cand_by_id = baseline.by_id(), candidate.by_id()
+    per_case_hashes = bool(baseline.results or candidate.results) and all(
+        r.case_sha256 is not None for r in [*baseline.results, *candidate.results]
+    )
+    changed_cases = (
+        [
+            case_id
+            for case_id, base in base_by_id.items()
+            if case_id in cand_by_id and base.case_sha256 != cand_by_id[case_id].case_sha256
+        ]
+        if per_case_hashes
+        else []
+    )
+    mismatch = (
+        bool(changed_cases) if per_case_hashes else baseline.suite_sha256 != candidate.suite_sha256
+    )
+    mismatch_message = (
+        "the runs used different case definitions for case(s): " + ", ".join(changed_cases)
+        if per_case_hashes
+        else "the runs used different case definitions (suite_sha256 differs)"
+    )
     if mismatch and not allow_suite_mismatch:
         problems.append(
-            "the runs used different case definitions (suite_sha256 differs); re-run both "
-            "with the same suite file or pass --allow-suite-mismatch"
+            mismatch_message
+            + "; re-run both with the same suite file or pass --allow-suite-mismatch"
         )
     if problems:
         raise ValidationError("comparison", problems)
 
-    base_by_id, cand_by_id = baseline.by_id(), candidate.by_id()
     ordered_ids = list(base_by_id) + [i for i in cand_by_id if i not in base_by_id]
 
     type_conflicts = [
@@ -231,7 +250,7 @@ def compare_runs(
 
     notes = []
     if mismatch:
-        notes.append("Runs used different case definitions; results may not be comparable.")
+        notes.append(mismatch_message + "; results may not be comparable.")
     if "none" in (baseline.capture_output, candidate.capture_output):
         notes.append(
             "Output capture was disabled for at least one run; output changes are unknown."
