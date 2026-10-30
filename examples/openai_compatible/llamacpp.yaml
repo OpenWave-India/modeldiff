@@ -1,0 +1,14 @@
+# Optional: generate outputs with an OpenAI-compatible local server
+# (llama.cpp llama-server, vLLM, LM Studio, etc.) instead of replaying.
+# Requires a server exposing /v1/chat/completions, e.g.:
+#   llama-server -m model.gguf --port 8080
+id: llamacpp-q4
+provider: openai_compatible
+base_url: http://localhost:8080/v1
+model: local-model
+options:
+  temperature: 0
+  seed: 42
+timeout_s: 120
+capture_output: full
+# api_key_env: OPENAI_API_KEY   # optional; key is never written to results

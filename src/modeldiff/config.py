@@ -24,19 +24,21 @@ CONFIG_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
     "properties": {
         "id": {"type": "string", "pattern": r"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
-        "provider": {"enum": ["replay", "ollama"]},
+        "provider": {"enum": ["replay", "ollama", "openai_compatible"]},
         "description": {"type": "string"},
         "capture_output": {"enum": list(CAPTURE_MODES)},
         "metadata": {"type": "object"},
         # replay
         "outputs": {"type": "string", "minLength": 1},
-        # ollama
+        # ollama / openai_compatible
         "model": {"type": "string", "minLength": 1},
         "base_url": {"type": "string", "pattern": r"^https?://"},
         "options": {"type": "object"},
         "format": {},
         "system": {"type": "string"},
         "timeout_s": {"type": "number", "exclusiveMinimum": 0},
+        # openai_compatible
+        "api_key_env": {"type": "string", "minLength": 1},
     },
     "allOf": [
         {
@@ -46,6 +48,10 @@ CONFIG_SCHEMA: dict[str, Any] = {
         {
             "if": {"properties": {"provider": {"const": "ollama"}}},
             "then": {"required": ["model"]},
+        },
+        {
+            "if": {"properties": {"provider": {"const": "openai_compatible"}}},
+            "then": {"required": ["model", "base_url"]},
         },
     ],
 }
