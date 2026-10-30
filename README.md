@@ -295,6 +295,7 @@ modeldiff compare BASELINE CANDIDATE [--format text|markdown|json|junit] [--outp
 modeldiff report RESULTS [--format text|markdown|json] [--output FILE]
 modeldiff schema {suite,config,result} [--output FILE]
 ```
+
 For CI integrations, `modeldiff compare --format junit` writes JUnit XML.
 Each comparison case becomes a `<testcase>`: regressions and still-failing
 cases are reported as `<failure>`, candidate execution errors as `<error>`,
@@ -471,6 +472,9 @@ Thanks to everyone who has contributed to ModelDiff. Contributors are added here
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/faisalorakzai-lab"><img src="https://avatars.githubusercontent.com/u/176455968?v=4?s=80" width="80px;" alt="Faisal Orakzai"/><br /><sub><b>Faisal Orakzai</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/SwetaKumari7"><img src="https://avatars.githubusercontent.com/u/210186755?v=4?s=80" width="80px;" alt="swetak"/><br /><sub><b>swetak</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=SwetaKumari7" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Doomguy-BFG9000"><img src="https://avatars.githubusercontent.com/u/307901355?v=4?s=80" width="80px;" alt="Doomguy"/><br /><sub><b>Doomguy</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/siddardh-core"><img src="https://avatars.githubusercontent.com/u/346924282?v=4?s=80" width="80px;" alt="Siddardha Darapureddy"/><br /><sub><b>Siddardha Darapureddy</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=siddardh-core" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=siddardh-core" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=siddardh-core" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
