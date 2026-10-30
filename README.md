@@ -289,12 +289,19 @@ To compare two quantizations, point two configs at two model tags, run both, and
 modeldiff validate SUITE [SUITE ...] [--plugin P ...]
 modeldiff run SUITE --config CFG --output OUT [--tag T ...] [--capture full|hash|none]
               [--plugin P ...] [--enforce-performance] [--fail-on-failure]
-modeldiff compare BASELINE CANDIDATE [--format text|markdown|json] [--output FILE]
+modeldiff compare BASELINE CANDIDATE [--format text|markdown|json|junit] [--output FILE]
               [--latency-threshold PCT] [--min-latency-delta MS] [--fail-on-latency]
               [--allow-suite-mismatch] [--exit-zero]
 modeldiff report RESULTS [--format text|markdown|json] [--output FILE]
 modeldiff schema {suite,config,result} [--output FILE]
 ```
+For CI integrations, `modeldiff compare --format junit` writes JUnit XML.
+Each comparison case becomes a `<testcase>`: regressions and still-failing
+cases are reported as `<failure>`, candidate execution errors as `<error>`,
+and cases missing from the candidate as `<skipped>`. Passing cases with
+changed output receive a `<system-out>` note; they are not counted as failures.
+Fixed and unchanged passing cases have no failure element. JUnit is supported
+by `compare`, not by the single-run `report` command.
 
 `validate` checks every supplied suite file, prints an `OK:` line for each valid
 file, and reports each invalid file on stderr. It checks the remaining files
@@ -433,7 +440,6 @@ These are ideas, not commitments. See the issue tracker for what is being worked
 
 - Repeated runs per case, with variance reported, to separate noise from change.
 - A chat/messages input format and a provider for OpenAI-compatible local servers (llama.cpp, vLLM, LM Studio).
-- JUnit XML output for CI systems.
 
 ## Contributing
 

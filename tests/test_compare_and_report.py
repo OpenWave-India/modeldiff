@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import xml.etree.ElementTree as ET
 
 import pytest
 
@@ -218,6 +219,53 @@ def test_run_report_formats():
     assert render_run(run).startswith("s @ cfg: 1/2 passed, 1 failed, 0 errors")
     assert "| `b` | exact | fail | nope |" in render_run(run, "markdown")
     assert json.loads(render_run(run, "json"))["config"]["id"] == "cfg"
+
+
+def test_junit_report_is_valid_xml_and_classifies_cases():
+    base = make_run(
+        "b",
+        case("reg", "pass"),
+        case("err", "pass"),
+        case("fix", "fail"),
+        case("still", "fail"),
+        case("same", "pass", "baseline output"),
+        case("gone", "pass"),
+    )
+    cand = make_run(
+        "c",
+        case("reg", "fail", reason="bad <value> & more"),
+        case("err", "error", reason="execution error"),
+        case("fix", "pass"),
+        case("still", "error", reason="still failing"),
+        case("same", "pass", "candidate output"),
+        case("new", "pass"),
+        case("newerr", "error", reason="new execution error"),
+    )
+
+    comp = compare_runs(base, cand)
+    root = ET.fromstring(render_comparison(comp, "junit"))
+
+    cases = {item.attrib["name"]: item for item in root.findall("testcase")}
+
+    assert root.tag == "testsuite"
+    assert root.attrib["tests"] == "8"
+    assert root.attrib["failures"] == "2"
+    assert root.attrib["errors"] == "2"
+    assert root.attrib["skipped"] == "1"
+
+    assert cases["reg"].find("failure") is not None
+    assert cases["err"].find("error") is not None
+    assert cases["still"].find("failure") is not None
+    assert cases["fix"].find("failure") is None
+    assert cases["gone"].find("skipped") is not None
+    assert cases["newerr"].find("error") is not None
+
+    failure = cases["reg"].find("failure")
+    assert failure is not None
+    assert failure.text == "bad <value> & more"
+    system_out = cases["same"].find("system-out")
+    assert system_out is not None
+    assert system_out.text == ("Output changed between baseline and candidate; both cases passed.")
 
 
 @pytest.mark.parametrize("fmt", ["text", "markdown"])

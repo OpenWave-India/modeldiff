@@ -23,7 +23,12 @@ from modeldiff.compare import compare_runs
 from modeldiff.config import CAPTURE_MODES, CONFIG_SCHEMA, load_config
 from modeldiff.errors import ModelDiffError, ValidationError
 from modeldiff.providers import ReplayProvider, build_provider
-from modeldiff.report import FORMATS, render_comparison, render_run
+from modeldiff.report import (
+    COMPARISON_FORMATS,
+    FORMATS,
+    render_comparison,
+    render_run,
+)
 from modeldiff.results import RESULT_SCHEMA, load_run, save_run
 from modeldiff.runner import run_suite
 
@@ -181,7 +186,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("compare", help="compare a baseline result file with a candidate")
     p.add_argument("baseline", help="baseline result JSON")
     p.add_argument("candidate", help="candidate result JSON")
-    p.add_argument("--format", "-f", choices=FORMATS, default="text")
+    p.add_argument("--format", "-f", choices=COMPARISON_FORMATS, default="text")
     p.add_argument("--output", "-o", help="write the report to a file instead of stdout")
     p.add_argument(
         "--latency-threshold",
