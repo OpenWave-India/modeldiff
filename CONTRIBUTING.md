@@ -59,6 +59,7 @@ To give everyone a chance, especially people making their first contribution:
 - Work on **one issue at a time**. Claim the next one after your pull request is merged.
 - Issues labelled `good first issue` are for **first-time contributors**. After your first merged pull request, please leave them for newcomers and pick `help wanted` or other issues instead.
 - Pull requests for issues that weren't assigned to you, or beyond the one-at-a-time limit, may be closed so others can take the issue.
+- If there's no update on an assigned issue for **7 days**, a maintainer may unassign it so someone else can take it. If you need more time, just comment on the issue.
 
 ## Branches and pull requests
 
