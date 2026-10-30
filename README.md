@@ -292,7 +292,6 @@ modeldiff run SUITE --config CFG --output OUT [--tag T ...] [--capture full|hash
 modeldiff compare BASELINE CANDIDATE [--format text|markdown|json|junit] [--output FILE]
               [--latency-threshold PCT] [--min-latency-delta MS] [--fail-on-latency]
               [--allow-suite-mismatch] [--exit-zero]
-
 modeldiff report RESULTS [--format text|markdown|json] [--output FILE]
 modeldiff schema {suite,config,result} [--output FILE]
 ```
@@ -441,7 +440,6 @@ These are ideas, not commitments. See the issue tracker for what is being worked
 
 - Repeated runs per case, with variance reported, to separate noise from change.
 - A chat/messages input format and a provider for OpenAI-compatible local servers (llama.cpp, vLLM, LM Studio).
-
 
 ## Contributing
 
