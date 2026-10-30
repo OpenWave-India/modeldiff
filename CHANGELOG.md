@@ -11,6 +11,9 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 - `modeldiff run` warns when a replay file has outputs for case IDs that are not in the suite ([#20](https://github.com/OpenWave-India/modeldiff/pull/20), by [@Mrun25](https://github.com/Mrun25), fixes [#5](https://github.com/OpenWave-India/modeldiff/issues/5)).
 - `modeldiff schema {suite,config,result}` prints the JSON Schema for each file format, for editor validation ([#18](https://github.com/OpenWave-India/modeldiff/pull/18), by [@faisalorakzai-lab](https://github.com/faisalorakzai-lab), fixes [#6](https://github.com/OpenWave-India/modeldiff/issues/6)).
 - Second example suite, `examples/extraction`, for structured invoice and address extraction ([#19](https://github.com/OpenWave-India/modeldiff/pull/19), by [@faisalorakzai-lab](https://github.com/faisalorakzai-lab), fixes [#7](https://github.com/OpenWave-India/modeldiff/issues/7)).
+- File format reference in `docs/file-formats.md` ([#21](https://github.com/OpenWave-India/modeldiff/pull/21), by [@SwetaKumari7](https://github.com/SwetaKumari7), fixes [#8](https://github.com/OpenWave-India/modeldiff/issues/8)).
+- Comparison reports show per-case warnings from the candidate run, such as an exceeded latency limit, and mark the ones that are new compared with the baseline ([#23](https://github.com/OpenWave-India/modeldiff/pull/23), by [@Mrun25](https://github.com/Mrun25), fixes [#2](https://github.com/OpenWave-India/modeldiff/issues/2)).
+- `modeldiff validate` accepts several suite files, reports every invalid one, and exits 2 if any is invalid ([#33](https://github.com/OpenWave-India/modeldiff/pull/33), by [@Doomguy-BFG9000](https://github.com/Doomguy-BFG9000), fixes [#29](https://github.com/OpenWave-India/modeldiff/issues/29)).
 
 ## [0.1.0] - 2026-10-29
 

@@ -43,6 +43,8 @@ class CaseComparison:
     baseline_duration_ms: float | None = None
     candidate_duration_ms: float | None = None
     slowdown: bool = False
+    baseline_warnings: list[str] = field(default_factory=list)
+    candidate_warnings: list[str] = field(default_factory=list)
 
     @property
     def duration_delta_ms(self) -> float | None:
@@ -191,6 +193,8 @@ def compare_runs(
             candidate_status=cand.status if cand else None,
             baseline_reason=(base.reason or base.error) if base else None,
             candidate_reason=(cand.reason or cand.error) if cand else None,
+            baseline_warnings=list(base.warnings) if base else [],
+            candidate_warnings=list(cand.warnings) if cand else [],
             baseline_duration_ms=base.duration_ms if base else None,
             candidate_duration_ms=cand.duration_ms if cand else None,
         )

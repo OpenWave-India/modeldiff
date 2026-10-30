@@ -11,6 +11,7 @@ from modeldiff.results import RunResult
 FORMATS = ("text", "markdown", "json")
 COMPARISON_FORMATS = (*FORMATS, "junit")
 
+
 def _ms(value: float | None) -> str:
     return "-" if value is None else f"{value:.1f} ms"
 
@@ -96,6 +97,19 @@ def _latency_lines(comp: Comparison) -> list[str]:
     ]
 
 
+def _warning_lines(comp: Comparison, markdown: bool = False) -> list[str]:
+    warned = [case for case in comp.cases if case.candidate_warnings]
+    if not warned:
+        return []
+    lines = ["", "## Warnings" if markdown else "Warnings:"]
+    for case in warned:
+        for warning in case.candidate_warnings:
+            marker = " (new)" if warning not in case.baseline_warnings else ""
+            prefix = f"- `{case.case_id}`: " if markdown else f"  {case.case_id}: "
+            lines.append(f"{prefix}{warning}{marker}")
+    return lines
+
+
 def render_comparison(comp: Comparison, fmt: str = "text") -> str:
     if fmt == "json":
         return json.dumps(comp.to_dict(), indent=2, ensure_ascii=False)
@@ -134,6 +148,7 @@ def _render_text(comp: Comparison) -> str:
         for c in comp.label_changes:
             lines.append(f"  {c.case_id}: {c.label_change[0]!r} -> {c.label_change[1]!r}")
 
+    lines.extend(_warning_lines(comp))
     lines.append("")
     lines.extend(_latency_lines(comp))
     if comp.latency_threshold_pct is not None:
@@ -187,6 +202,7 @@ def _render_markdown(comp: Comparison) -> str:
             f"| `{c.case_id}` | {c.type} | {c.category.replace('_', ' ')} ({_transition(c)}) "
             f"| {changed} | {latency} | {reason} |"
         )
+    lines.extend(_warning_lines(comp, markdown=True))
     lines.append("")
     lines.extend(_latency_lines(comp))
     for note in comp.notes:
@@ -222,7 +238,6 @@ def _render_junit(comp: Comparison) -> str:
             attributes["time"] = f"{seconds:.6f}"
 
         testcase = ET.SubElement(root, "testcase", attributes)
-
 
         if case.category == "still_failing":
             reason = case.candidate_reason or "Case is still failing"
@@ -270,7 +285,6 @@ def _render_junit(comp: Comparison) -> str:
                 {"message": "No candidate result available"},
             )
             skipped += 1
-
 
     root.set("failures", str(failures))
     root.set("errors", str(errors))

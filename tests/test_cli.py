@@ -94,6 +94,96 @@ def test_validate_invalid_file_exit_2(write_yaml, capsys):
     assert "suite contains no cases" in capsys.readouterr().err
 
 
+def test_validate_multiple_valid_files(write_yaml, capsys):
+    paths = [
+        write_yaml(
+            f"{name}.yaml",
+            {
+                "suite": name,
+                "cases": [{"id": "c1", "type": "exact", "input": "hi", "expected": "hi"}],
+            },
+        )
+        for name in ("first", "second")
+    ]
+    assert main(["validate", *map(str, paths)]) == 0
+    captured = capsys.readouterr()
+    assert captured.out.splitlines() == [
+        f"OK: {path} defines suite {name!r} with 1 cases (1 exact)"
+        for path, name in zip(paths, ("first", "second"), strict=True)
+    ]
+    assert captured.err == ""
+
+
+@pytest.mark.parametrize("invalid_index", [0, 1, 2])
+def test_validate_reports_all_files_when_one_is_invalid(write_yaml, capsys, invalid_index):
+    paths = [
+        write_yaml(
+            f"{index}.yaml",
+            {
+                "suite": f"suite-{index}",
+                "cases": []
+                if index == invalid_index
+                else [{"id": "c1", "type": "exact", "input": "hi", "expected": "hi"}],
+            },
+        )
+        for index in range(3)
+    ]
+    assert main(["validate", *map(str, paths)]) == 2
+    captured = capsys.readouterr()
+    assert len(captured.out.splitlines()) == 2
+    for index, path in enumerate(paths):
+        if index == invalid_index:
+            assert f"error: {path} is invalid:\n  - suite contains no cases\n" == captured.err
+        else:
+            assert f"OK: {path} defines suite 'suite-{index}'" in captured.out
+
+
+def test_validate_reports_missing_and_malformed_files_without_stopping(
+    write_yaml, tmp_path, capsys
+):
+    missing = tmp_path / "missing.yaml"
+    malformed = tmp_path / "malformed.json"
+    malformed.write_text("{", encoding="utf-8")
+    valid = write_yaml(
+        "valid.yaml",
+        {
+            "suite": "valid",
+            "cases": [{"id": "c1", "type": "exact", "input": "hi", "expected": "hi"}],
+        },
+    )
+    assert main(["validate", str(missing), str(malformed), str(valid)]) == 2
+    captured = capsys.readouterr()
+    assert captured.err.count("error:") == 2
+    assert captured.err.index(str(missing)) < captured.err.index(str(malformed))
+    assert "file not found" in captured.err and "malformed JSON" in captured.err
+    assert captured.out == f"OK: {valid} defines suite 'valid' with 1 cases (1 exact)\n"
+
+
+def test_validate_plugin_applies_to_every_file(quickstart, write_yaml, capsys):
+    second = write_yaml(
+        "custom.yaml",
+        {
+            "suite": "custom",
+            "cases": [{"id": "custom", "type": "custom", "input": "hi", "check": "max_words"}],
+        },
+    )
+    assert (
+        main(["validate", quickstart["suite"], str(second), "--plugin", quickstart["plugin"]]) == 0
+    )
+    captured = capsys.readouterr()
+    assert len(captured.out.splitlines()) == 2
+    assert f"OK: {quickstart['suite']}" in captured.out and f"OK: {second}" in captured.out
+    assert captured.err == ""
+
+
+def test_validate_single_file_message_stays_the_same(quickstart, capsys):
+    assert main(["validate", quickstart["suite"], "--plugin", quickstart["plugin"]]) == 0
+    assert capsys.readouterr().out == (
+        f"OK: {quickstart['suite']} defines suite 'support-assistant' "
+        "with 9 cases (3 classification, 1 custom, 1 exact, 1 json, 1 required_fields, 2 tool_call)\n"
+    )
+
+
 def test_plugin_file_can_be_loaded_twice(quickstart):
     # Regression: re-executing a plugin file re-registered its checks with new
     # function objects and raised "already registered".
@@ -421,17 +511,20 @@ def test_compare_junit_export(runs, tmp_path):
     base, cand = runs
     report = tmp_path / "reports" / "diff.xml"
 
-    assert main(
-        [
-            "compare",
-            str(base),
-            str(cand),
-            "--format",
-            "junit",
-            "-o",
-            str(report),
-        ]
-    ) == 1
+    assert (
+        main(
+            [
+                "compare",
+                str(base),
+                str(cand),
+                "--format",
+                "junit",
+                "-o",
+                str(report),
+            ]
+        )
+        == 1
+    )
 
     root = ET.parse(report).getroot()
 

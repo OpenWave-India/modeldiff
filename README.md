@@ -114,6 +114,9 @@ Classification changes (2):
   sentiment-positive: 'neutral' -> 'positive'
   intent-billing: 'billing' -> 'technical'
 
+Warnings:
+  summary-length: latency 1720.0 ms exceeds max_latency_ms 1500 (new)
+
 Latency (median over 9 cases): 420.0 ms -> 450.0 ms (+7.1%; baseline recorded, candidate recorded)
 Slower than +25%:
   summary-length: 900.0 ms -> 1720.0 ms
@@ -226,6 +229,8 @@ Load the checks with `--plugin my_checks.py`, or with `--plugin package.module` 
 
 ## Run configurations
 
+For a field-by-field reference to suite files, run configurations, recorded outputs, run results, and comparison JSON, see [File formats](docs/file-formats.md).
+
 A config describes one side of a comparison.
 
 ```yaml
@@ -281,7 +286,7 @@ To compare two quantizations, point two configs at two model tags, run both, and
 ## CLI reference
 
 ```
-modeldiff validate SUITE [--plugin P ...]
+modeldiff validate SUITE [SUITE ...] [--plugin P ...]
 modeldiff run SUITE --config CFG --output OUT [--tag T ...] [--capture full|hash|none]
               [--plugin P ...] [--enforce-performance] [--fail-on-failure]
 modeldiff compare BASELINE CANDIDATE [--format text|markdown|json] [--output FILE]
@@ -291,11 +296,22 @@ modeldiff report RESULTS [--format text|markdown|json] [--output FILE]
 modeldiff schema {suite,config,result} [--output FILE]
 ```
 
+`validate` checks every supplied suite file, prints an `OK:` line for each valid
+file, and reports each invalid file on stderr. It checks the remaining files
+after an error and exits with code 2 if any file is invalid; otherwise it exits
+with code 0. Any `--plugin` options apply to all files:
+
+```bash
+modeldiff validate suites/support.yaml suites/billing.yaml --plugin checks.py
+```
+
 | Exit code | Meaning |
 | --- | --- |
 | 0 | Success. For `compare`, no regressions. |
 | 1 | `compare` found regressions (or flagged slowdowns with `--fail-on-latency`); `run --fail-on-failure` saw a failing or erroring case. |
 | 2 | Invalid input: malformed suite, config, or result file, or bad arguments. |
+
+Comparison reports show candidate per-case warnings, with `(new)` marking warnings absent from the baseline. JSON comparisons include `baseline_warnings` and `candidate_warnings` for every case. Warnings do not change regression counts or exit codes.
 
 `compare` refuses to compare runs of different suites. If the case definitions differ (the `suite_sha256` in the result files does not match), it also refuses unless you pass `--allow-suite-mismatch`. `python -m modeldiff` works the same as `modeldiff`.
 
@@ -422,6 +438,14 @@ These are ideas, not commitments. See the issue tracker for what is being worked
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and look for issues labelled `good first issue`. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md). To report security issues, see [SECURITY.md](SECURITY.md).
 
+### One issue at a time
+
+To give everyone a chance, especially people making their first contribution:
+
+- Work on **one issue at a time**. Claim the next one after your pull request is merged.
+- Issues labelled `good first issue` are for **first-time contributors**. After your first merged pull request, please leave them for newcomers and pick `help wanted` or other issues instead.
+- Pull requests for issues that weren't assigned to you, or beyond the one-at-a-time limit, may be closed so others can take the issue.
+
 If ModelDiff is useful to you, a star on the repository helps other people find it. For project news, follow [OpenWave India on LinkedIn](https://www.linkedin.com/company/openwave-india).
 
 ### Contributors
@@ -437,6 +461,8 @@ Thanks to everyone who has contributed to ModelDiff. Contributors are added here
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/chiragjangiir"><img src="https://avatars.githubusercontent.com/u/184008125?v=4?s=80" width="80px;" alt="Chirag Jangir"/><br /><sub><b>Chirag Jangir</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=chiragjangiir" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=chiragjangiir" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=chiragjangiir" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Mrun25"><img src="https://avatars.githubusercontent.com/u/165297479?v=4?s=80" width="80px;" alt="Mrunmayee Daware"/><br /><sub><b>Mrunmayee Daware</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=Mrun25" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Mrun25" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Mrun25" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/faisalorakzai-lab"><img src="https://avatars.githubusercontent.com/u/176455968?v=4?s=80" width="80px;" alt="Faisal Orakzai"/><br /><sub><b>Faisal Orakzai</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/SwetaKumari7"><img src="https://avatars.githubusercontent.com/u/210186755?v=4?s=80" width="80px;" alt="swetak"/><br /><sub><b>swetak</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=SwetaKumari7" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Doomguy-BFG9000"><img src="https://avatars.githubusercontent.com/u/307901355?v=4?s=80" width="80px;" alt="Doomguy"/><br /><sub><b>Doomguy</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
