@@ -277,4 +277,42 @@ def test_warnings_on_missing_candidate_are_preserved_in_json():
     comp = compare_runs(make_run("b", base), make_run("c"))
     assert comp.to_dict()["cases"][0]["baseline_warnings"] == ["old warning"]
     assert comp.to_dict()["cases"][0]["candidate_warnings"] == []
+
+
+def test_case_hashes_allow_subset_of_unchanged_suite():
+    a, b, subset = case("a", "pass"), case("b", "pass"), case("a", "pass")
+    a.case_sha256 = subset.case_sha256 = "a" * 64
+    b.case_sha256 = "b" * 64
+    comp = compare_runs(make_run("b", a, b), make_run("c", subset, sha="c" * 64))
+    assert [c.case_id for c in comp.by_category("missing_in_candidate")] == ["b"]
+    assert not comp.suite_mismatch
+    assert not any("different case definitions" in note for note in comp.notes)
+
+
+def test_changed_case_hash_names_the_case_even_when_suite_hash_matches():
+    base, cand = case("changed-case", "pass"), case("changed-case", "pass")
+    base.case_sha256, cand.case_sha256 = "a" * 64, "b" * 64
+    with pytest.raises(ValidationError, match="changed-case"):
+        compare_runs(make_run("b", base), make_run("c", cand))
+    comp = compare_runs(make_run("b", base), make_run("c", cand), allow_suite_mismatch=True)
+    assert comp.suite_mismatch and any("changed-case" in note for note in comp.notes)
+
+
+def test_partial_case_hashes_retain_legacy_suite_check():
+    base, cand = case("a", "pass"), case("a", "pass")
+    base.case_sha256 = "a" * 64
+    with pytest.raises(ValidationError, match="suite_sha256"):
+        compare_runs(make_run("b", base), make_run("c", cand, sha="b" * 64))
+
+
+def test_empty_legacy_runs_keep_suite_hash_check():
+    with pytest.raises(ValidationError, match="suite_sha256"):
+        compare_runs(make_run("b"), make_run("c", sha="b" * 64))
+
+
+def test_case_hashes_allow_reordered_cases():
+    a, b = case("a", "pass"), case("b", "pass")
+    a.case_sha256, b.case_sha256 = "a" * 64, "b" * 64
+    comp = compare_runs(make_run("b", a, b), make_run("c", b, a, sha="c" * 64))
+    assert not comp.suite_mismatch
     assert comp.regressions == []

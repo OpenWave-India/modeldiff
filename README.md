@@ -313,7 +313,8 @@ modeldiff validate suites/support.yaml suites/billing.yaml --plugin checks.py
 
 Comparison reports show candidate per-case warnings, with `(new)` marking warnings absent from the baseline. JSON comparisons include `baseline_warnings` and `candidate_warnings` for every case. Warnings do not change regression counts or exit codes.
 
-`compare` refuses to compare runs of different suites. If the case definitions differ (the `suite_sha256` in the result files does not match), it also refuses unless you pass `--allow-suite-mismatch`. `python -m modeldiff` works the same as `modeldiff`.
+
+`compare` refuses to compare runs of different suites. New result files store a `case_sha256` for each case, so a full run and a `--tag` subset can be compared: cases left out are reported as missing. Changed definitions are rejected with the affected case IDs unless you pass `--allow-suite-mismatch`. If either run lacks any per-case hashes, comparison keeps the older `suite_sha256` check instead. `python -m modeldiff` works the same as `modeldiff`.
 
 ### JSON Schemas and editor support
 

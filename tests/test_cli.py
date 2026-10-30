@@ -504,3 +504,54 @@ def test_replay_warns_only_for_ids_absent_from_full_suite(
     records = json.loads(result.read_text())["results"]
     assert len(records) == (1 if tags else 2)
     assert all(record["status"] == "pass" for record in records)
+
+
+def test_compare_full_and_tagged_run_uses_case_hashes(tmp_path, quickstart, capsys):
+    base, tagged = tmp_path / "full.json", tmp_path / "tagged.json"
+    q = quickstart
+    for output, extra in [(base, []), (tagged, ["--tag", "smoke"])]:
+        assert (
+            main(
+                [
+                    "run",
+                    q["suite"],
+                    "-c",
+                    q["baseline"],
+                    "-o",
+                    str(output),
+                    "--plugin",
+                    q["plugin"],
+                    *extra,
+                ]
+            )
+            == 0
+        )
+    capsys.readouterr()
+    assert main(["compare", str(base), str(tagged)]) == 0
+    report = capsys.readouterr()
+    assert "Missing in candidate (8)" in report.out
+    assert not report.err
+    assert all(
+        len(result["case_sha256"]) == 64 for result in json.loads(base.read_text())["results"]
+    )
+
+
+def test_compare_edited_case_names_definition_change(tmp_path, quickstart, capsys):
+    import yaml
+
+    from modeldiff.cases import load_suite
+
+    q = quickstart
+    suite = read_document(Path(q["suite"]))
+    suite["cases"][0]["expected"] = "changed expected output"
+    edited = tmp_path / "edited.yaml"
+    edited.write_text(yaml.safe_dump(suite))
+    base, candidate = tmp_path / "base.json", tmp_path / "edited.json"
+    for path, output in [(q["suite"], base), (str(edited), candidate)]:
+        assert (
+            main(["run", path, "-c", q["baseline"], "-o", str(output), "--plugin", q["plugin"]])
+            == 0
+        )
+    capsys.readouterr()
+    assert main(["compare", str(base), str(candidate)]) == 2
+    assert load_suite(edited).cases[0].id in capsys.readouterr().err

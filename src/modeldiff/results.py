@@ -38,6 +38,7 @@ RESULT_SCHEMA: dict[str, Any] = {
                 "required": ["case_id", "type", "status", "timestamp"],
                 "properties": {
                     "case_id": {"type": "string"},
+                    "case_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
                     "type": {"type": "string"},
                     "status": {"enum": list(STATUSES)},
                     "reason": {"type": ["string", "null"]},
@@ -76,6 +77,7 @@ class CaseResult:
     error: str | None = None
     provider_metadata: dict[str, Any] = field(default_factory=dict)
     tags: list[str] = field(default_factory=list)
+    case_sha256: str | None = None
 
 
 @dataclass
