@@ -228,7 +228,7 @@ def test_junit_report_is_valid_xml_and_classifies_cases():
         case("err", "pass"),
         case("fix", "fail"),
         case("still", "fail"),
-        case("same", "pass"),
+        case("same", "pass", "baseline output"),
         case("gone", "pass"),
     )
     cand = make_run(
@@ -237,7 +237,7 @@ def test_junit_report_is_valid_xml_and_classifies_cases():
         case("err", "error", reason="execution error"),
         case("fix", "pass"),
         case("still", "error", reason="still failing"),
-        case("same", "pass"),
+        case("same", "pass", "candidate output"),
         case("new", "pass"),
         case("newerr", "error", reason="new execution error"),
     )
@@ -263,6 +263,9 @@ def test_junit_report_is_valid_xml_and_classifies_cases():
     failure = cases["reg"].find("failure")
     assert failure is not None
     assert failure.text == "bad <value> & more"
+    system_out = cases["same"].find("system-out")
+    assert system_out is not None
+    assert system_out.text == ("Output changed between baseline and candidate; both cases passed.")
 
 
 @pytest.mark.parametrize("fmt", ["text", "markdown"])

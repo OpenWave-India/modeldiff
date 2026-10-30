@@ -278,13 +278,9 @@ def _render_junit(comp: Comparison) -> str:
             element.text = "No candidate result was available for this case."
             skipped += 1
 
-        elif case.candidate_status is None:
-            ET.SubElement(
-                testcase,
-                "skipped",
-                {"message": "No candidate result available"},
-            )
-            skipped += 1
+        elif case.category == "unchanged_pass" and case.output_changed is True:
+            note = ET.SubElement(testcase, "system-out")
+            note.text = "Output changed between baseline and candidate; both cases passed."
 
     root.set("failures", str(failures))
     root.set("errors", str(errors))
