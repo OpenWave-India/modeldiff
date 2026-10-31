@@ -237,8 +237,14 @@ def _eval_classification(case: TestCase, output: str) -> CheckResult:
     predicted = _label(output, normalize)
     expected = _label(case.expected, normalize)
     details = {"predicted_label": predicted, "expected_label": expected}
-    if case.labels is not None and predicted not in {_label(lbl, normalize) for lbl in case.labels}:
-        return CheckResult(False, f"predicted label {predicted!r} is not an allowed label", details)
+    if case.labels is not None:
+        allowed = [_label(lbl, normalize) for lbl in case.labels]
+        if predicted not in allowed:
+            shown = ", ".join(repr(label) for label in allowed[:10])
+            if len(allowed) > 10:
+                shown += ", ..."
+            reason = f"predicted label {predicted!r} is not an allowed label (allowed: {shown})"
+            return CheckResult(False, reason, details)
     if predicted != expected:
         return CheckResult(False, f"predicted {predicted!r}, expected {expected!r}", details)
     return CheckResult(True, None, details)

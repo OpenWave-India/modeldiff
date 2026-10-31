@@ -193,6 +193,10 @@ Fields used by each type:
 | `custom` | `check` (registered name), `params` (any mapping) | none |
 
 
+Classification failures for outputs outside `labels` list the allowed labels in
+suite order, using the configured normalization. Lists longer than ten labels
+show the first ten followed by `...`.
+
 Dotted paths address nested objects and list items: `customer.name`, `items.0.sku`.
 
 `options: {extract: code_fence}` extracts content from a single Markdown code fence (e.g. ```` ```json ... ``` ````) before parsing. If the output does not contain exactly one fenced block, the whole output is parsed.
