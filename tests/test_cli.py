@@ -508,7 +508,6 @@ def test_replay_warns_only_for_ids_absent_from_full_suite(
     assert all(record["status"] == "pass" for record in records)
 
 
-
 def test_redirected_stdout_is_utf8_with_non_ascii_report(tmp_path):
     """A non-ASCII report must not crash when stdout is redirected (GH-24).
 
@@ -554,7 +553,6 @@ def test_redirected_stdout_is_utf8_with_non_ascii_report(tmp_path):
     stdout = proc.stdout.decode("utf-8")
     assert "Results written to" in stdout
     assert "नकारात्मक" in stdout
- 
 
 
 def test_compare_junit_export(runs, tmp_path):
@@ -632,4 +630,3 @@ def test_compare_edited_case_names_definition_change(tmp_path, quickstart, capsy
     capsys.readouterr()
     assert main(["compare", str(base), str(candidate)]) == 2
     assert load_suite(edited).cases[0].id in capsys.readouterr().err
-
