@@ -138,7 +138,37 @@ def test_classification_mismatch_records_labels(make_case):
 def test_classification_rejects_label_outside_allowed_set(make_case):
     case = make_case(type="classification", expected="yes", labels=["yes", "no"])
     result = evaluate(case, "Yes, definitely")
-    assert "is not an allowed label" in result.reason
+    assert not result.passed
+    assert result.reason == (
+        "predicted label 'yes, definitely' is not an allowed label (allowed: 'yes', 'no')"
+    )
+    assert result.details == {"predicted_label": "yes, definitely", "expected_label": "yes"}
+
+
+@pytest.mark.parametrize(
+    ("normalize", "shown"),
+    [(True, "'yes', 'no'"), (False, "' YES ', 'No'")],
+)
+def test_classification_allowed_labels_follow_normalization(make_case, normalize, shown):
+    case = make_case(
+        type="classification",
+        expected=" YES ",
+        labels=[" YES ", "No"],
+        options={"normalize": normalize},
+    )
+    result = evaluate(case, "maybe")
+    assert result.reason == (f"predicted label 'maybe' is not an allowed label (allowed: {shown})")
+
+
+@pytest.mark.parametrize("count", [10, 12])
+def test_classification_allowed_labels_are_capped_at_ten(make_case, count):
+    labels = [f"label-{i}" for i in range(count)]
+    case = make_case(type="classification", expected=labels[0], labels=labels)
+    result = evaluate(case, "other")
+    shown = ", ".join(repr(label) for label in labels[:10])
+    if count > 10:
+        shown += ", ..."
+    assert result.reason == (f"predicted label 'other' is not an allowed label (allowed: {shown})")
 
 
 def test_classification_without_normalize_is_exact(make_case):
