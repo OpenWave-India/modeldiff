@@ -5,6 +5,7 @@ import os
 import socket
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -92,6 +93,96 @@ def test_validate_invalid_file_exit_2(write_yaml, capsys):
     path = write_yaml("s.yaml", {"suite": "s", "cases": []})
     assert main(["validate", str(path)]) == 2
     assert "suite contains no cases" in capsys.readouterr().err
+
+
+def test_validate_multiple_valid_files(write_yaml, capsys):
+    paths = [
+        write_yaml(
+            f"{name}.yaml",
+            {
+                "suite": name,
+                "cases": [{"id": "c1", "type": "exact", "input": "hi", "expected": "hi"}],
+            },
+        )
+        for name in ("first", "second")
+    ]
+    assert main(["validate", *map(str, paths)]) == 0
+    captured = capsys.readouterr()
+    assert captured.out.splitlines() == [
+        f"OK: {path} defines suite {name!r} with 1 cases (1 exact)"
+        for path, name in zip(paths, ("first", "second"), strict=True)
+    ]
+    assert captured.err == ""
+
+
+@pytest.mark.parametrize("invalid_index", [0, 1, 2])
+def test_validate_reports_all_files_when_one_is_invalid(write_yaml, capsys, invalid_index):
+    paths = [
+        write_yaml(
+            f"{index}.yaml",
+            {
+                "suite": f"suite-{index}",
+                "cases": []
+                if index == invalid_index
+                else [{"id": "c1", "type": "exact", "input": "hi", "expected": "hi"}],
+            },
+        )
+        for index in range(3)
+    ]
+    assert main(["validate", *map(str, paths)]) == 2
+    captured = capsys.readouterr()
+    assert len(captured.out.splitlines()) == 2
+    for index, path in enumerate(paths):
+        if index == invalid_index:
+            assert f"error: {path} is invalid:\n  - suite contains no cases\n" == captured.err
+        else:
+            assert f"OK: {path} defines suite 'suite-{index}'" in captured.out
+
+
+def test_validate_reports_missing_and_malformed_files_without_stopping(
+    write_yaml, tmp_path, capsys
+):
+    missing = tmp_path / "missing.yaml"
+    malformed = tmp_path / "malformed.json"
+    malformed.write_text("{", encoding="utf-8")
+    valid = write_yaml(
+        "valid.yaml",
+        {
+            "suite": "valid",
+            "cases": [{"id": "c1", "type": "exact", "input": "hi", "expected": "hi"}],
+        },
+    )
+    assert main(["validate", str(missing), str(malformed), str(valid)]) == 2
+    captured = capsys.readouterr()
+    assert captured.err.count("error:") == 2
+    assert captured.err.index(str(missing)) < captured.err.index(str(malformed))
+    assert "file not found" in captured.err and "malformed JSON" in captured.err
+    assert captured.out == f"OK: {valid} defines suite 'valid' with 1 cases (1 exact)\n"
+
+
+def test_validate_plugin_applies_to_every_file(quickstart, write_yaml, capsys):
+    second = write_yaml(
+        "custom.yaml",
+        {
+            "suite": "custom",
+            "cases": [{"id": "custom", "type": "custom", "input": "hi", "check": "max_words"}],
+        },
+    )
+    assert (
+        main(["validate", quickstart["suite"], str(second), "--plugin", quickstart["plugin"]]) == 0
+    )
+    captured = capsys.readouterr()
+    assert len(captured.out.splitlines()) == 2
+    assert f"OK: {quickstart['suite']}" in captured.out and f"OK: {second}" in captured.out
+    assert captured.err == ""
+
+
+def test_validate_single_file_message_stays_the_same(quickstart, capsys):
+    assert main(["validate", quickstart["suite"], "--plugin", quickstart["plugin"]]) == 0
+    assert capsys.readouterr().out == (
+        f"OK: {quickstart['suite']} defines suite 'support-assistant' "
+        "with 9 cases (3 classification, 1 custom, 1 exact, 1 json, 1 required_fields, 2 tool_call)\n"
+    )
 
 
 def test_plugin_file_can_be_loaded_twice(quickstart):
@@ -417,6 +508,7 @@ def test_replay_warns_only_for_ids_absent_from_full_suite(
     assert all(record["status"] == "pass" for record in records)
 
 
+
 def test_redirected_stdout_is_utf8_with_non_ascii_report(tmp_path):
     """A non-ASCII report must not crash when stdout is redirected (GH-24).
 
@@ -462,3 +554,82 @@ def test_redirected_stdout_is_utf8_with_non_ascii_report(tmp_path):
     stdout = proc.stdout.decode("utf-8")
     assert "Results written to" in stdout
     assert "नकारात्मक" in stdout
+ 
+
+
+def test_compare_junit_export(runs, tmp_path):
+    base, cand = runs
+    report = tmp_path / "reports" / "diff.xml"
+
+    assert (
+        main(
+            [
+                "compare",
+                str(base),
+                str(cand),
+                "--format",
+                "junit",
+                "-o",
+                str(report),
+            ]
+        )
+        == 1
+    )
+
+    root = ET.parse(report).getroot()
+
+    assert root.tag == "testsuite"
+    assert root.attrib["tests"] == "9"
+    assert int(root.attrib["failures"]) > 0
+
+
+def test_compare_full_and_tagged_run_uses_case_hashes(tmp_path, quickstart, capsys):
+    base, tagged = tmp_path / "full.json", tmp_path / "tagged.json"
+    q = quickstart
+    for output, extra in [(base, []), (tagged, ["--tag", "smoke"])]:
+        assert (
+            main(
+                [
+                    "run",
+                    q["suite"],
+                    "-c",
+                    q["baseline"],
+                    "-o",
+                    str(output),
+                    "--plugin",
+                    q["plugin"],
+                    *extra,
+                ]
+            )
+            == 0
+        )
+    capsys.readouterr()
+    assert main(["compare", str(base), str(tagged)]) == 0
+    report = capsys.readouterr()
+    assert "Missing in candidate (8)" in report.out
+    assert not report.err
+    assert all(
+        len(result["case_sha256"]) == 64 for result in json.loads(base.read_text())["results"]
+    )
+
+
+def test_compare_edited_case_names_definition_change(tmp_path, quickstart, capsys):
+    import yaml
+
+    from modeldiff.cases import load_suite
+
+    q = quickstart
+    suite = read_document(Path(q["suite"]))
+    suite["cases"][0]["expected"] = "changed expected output"
+    edited = tmp_path / "edited.yaml"
+    edited.write_text(yaml.safe_dump(suite))
+    base, candidate = tmp_path / "base.json", tmp_path / "edited.json"
+    for path, output in [(q["suite"], base), (str(edited), candidate)]:
+        assert (
+            main(["run", path, "-c", q["baseline"], "-o", str(output), "--plugin", q["plugin"]])
+            == 0
+        )
+    capsys.readouterr()
+    assert main(["compare", str(base), str(candidate)]) == 2
+    assert load_suite(edited).cases[0].id in capsys.readouterr().err
+

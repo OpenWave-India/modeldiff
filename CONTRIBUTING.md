@@ -50,7 +50,16 @@ modeldiff compare out/b.json out/c.json
 2. Comment on the issue to say you are working on it, so others do not duplicate the work. If you stop, say so, so that someone else can pick it up.
 3. Ask questions on the issue if anything is unclear. Every issue lists acceptance criteria, which are what reviewers will check.
 
-You do not need to be assigned before starting, but please do comment first.
+Please comment first and wait for a maintainer to assign the issue to you before starting.
+
+### One issue at a time
+
+To give everyone a chance, especially people making their first contribution:
+
+- Work on **one issue at a time**. Claim the next one after your pull request is merged.
+- Issues labelled `good first issue` are for **first-time contributors**. After your first merged pull request, please leave them for newcomers and pick `help wanted` or other issues instead.
+- Pull requests for issues that weren't assigned to you, or beyond the one-at-a-time limit, may be closed so others can take the issue.
+- If there's no update on an assigned issue for **7 days**, a maintainer may unassign it so someone else can take it. If you need more time, just comment on the issue.
 
 ## Branches and pull requests
 

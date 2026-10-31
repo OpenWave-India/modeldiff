@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import xml.etree.ElementTree as ET
 
 import pytest
 
@@ -220,6 +221,53 @@ def test_run_report_formats():
     assert json.loads(render_run(run, "json"))["config"]["id"] == "cfg"
 
 
+def test_junit_report_is_valid_xml_and_classifies_cases():
+    base = make_run(
+        "b",
+        case("reg", "pass"),
+        case("err", "pass"),
+        case("fix", "fail"),
+        case("still", "fail"),
+        case("same", "pass", "baseline output"),
+        case("gone", "pass"),
+    )
+    cand = make_run(
+        "c",
+        case("reg", "fail", reason="bad <value> & more"),
+        case("err", "error", reason="execution error"),
+        case("fix", "pass"),
+        case("still", "error", reason="still failing"),
+        case("same", "pass", "candidate output"),
+        case("new", "pass"),
+        case("newerr", "error", reason="new execution error"),
+    )
+
+    comp = compare_runs(base, cand)
+    root = ET.fromstring(render_comparison(comp, "junit"))
+
+    cases = {item.attrib["name"]: item for item in root.findall("testcase")}
+
+    assert root.tag == "testsuite"
+    assert root.attrib["tests"] == "8"
+    assert root.attrib["failures"] == "2"
+    assert root.attrib["errors"] == "2"
+    assert root.attrib["skipped"] == "1"
+
+    assert cases["reg"].find("failure") is not None
+    assert cases["err"].find("error") is not None
+    assert cases["still"].find("failure") is not None
+    assert cases["fix"].find("failure") is None
+    assert cases["gone"].find("skipped") is not None
+    assert cases["newerr"].find("error") is not None
+
+    failure = cases["reg"].find("failure")
+    assert failure is not None
+    assert failure.text == "bad <value> & more"
+    system_out = cases["same"].find("system-out")
+    assert system_out is not None
+    assert system_out.text == ("Output changed between baseline and candidate; both cases passed.")
+
+
 @pytest.mark.parametrize("fmt", ["text", "markdown"])
 def test_candidate_warnings_show_only_new_warnings_as_new(fmt):
     base, cand = case("warned", "pass"), case("warned", "pass")
@@ -277,4 +325,42 @@ def test_warnings_on_missing_candidate_are_preserved_in_json():
     comp = compare_runs(make_run("b", base), make_run("c"))
     assert comp.to_dict()["cases"][0]["baseline_warnings"] == ["old warning"]
     assert comp.to_dict()["cases"][0]["candidate_warnings"] == []
+
+
+def test_case_hashes_allow_subset_of_unchanged_suite():
+    a, b, subset = case("a", "pass"), case("b", "pass"), case("a", "pass")
+    a.case_sha256 = subset.case_sha256 = "a" * 64
+    b.case_sha256 = "b" * 64
+    comp = compare_runs(make_run("b", a, b), make_run("c", subset, sha="c" * 64))
+    assert [c.case_id for c in comp.by_category("missing_in_candidate")] == ["b"]
+    assert not comp.suite_mismatch
+    assert not any("different case definitions" in note for note in comp.notes)
+
+
+def test_changed_case_hash_names_the_case_even_when_suite_hash_matches():
+    base, cand = case("changed-case", "pass"), case("changed-case", "pass")
+    base.case_sha256, cand.case_sha256 = "a" * 64, "b" * 64
+    with pytest.raises(ValidationError, match="changed-case"):
+        compare_runs(make_run("b", base), make_run("c", cand))
+    comp = compare_runs(make_run("b", base), make_run("c", cand), allow_suite_mismatch=True)
+    assert comp.suite_mismatch and any("changed-case" in note for note in comp.notes)
+
+
+def test_partial_case_hashes_retain_legacy_suite_check():
+    base, cand = case("a", "pass"), case("a", "pass")
+    base.case_sha256 = "a" * 64
+    with pytest.raises(ValidationError, match="suite_sha256"):
+        compare_runs(make_run("b", base), make_run("c", cand, sha="b" * 64))
+
+
+def test_empty_legacy_runs_keep_suite_hash_check():
+    with pytest.raises(ValidationError, match="suite_sha256"):
+        compare_runs(make_run("b"), make_run("c", sha="b" * 64))
+
+
+def test_case_hashes_allow_reordered_cases():
+    a, b = case("a", "pass"), case("b", "pass")
+    a.case_sha256, b.case_sha256 = "a" * 64, "b" * 64
+    comp = compare_runs(make_run("b", a, b), make_run("c", b, a, sha="c" * 64))
+    assert not comp.suite_mismatch
     assert comp.regressions == []

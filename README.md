@@ -193,6 +193,10 @@ Fields used by each type:
 | `custom` | `check` (registered name), `params` (any mapping) | none |
 
 
+Classification failures for outputs outside `labels` list the allowed labels in
+suite order, using the configured normalization. Lists longer than ten labels
+show the first ten followed by `...`.
+
 Dotted paths address nested objects and list items: `customer.name`, `items.0.sku`.
 
 `options: {extract: code_fence}` extracts content from a single Markdown code fence (e.g. ```` ```json ... ``` ````) before parsing. If the output does not contain exactly one fenced block, the whole output is parsed.
@@ -286,14 +290,31 @@ To compare two quantizations, point two configs at two model tags, run both, and
 ## CLI reference
 
 ```
-modeldiff validate SUITE [--plugin P ...]
+modeldiff validate SUITE [SUITE ...] [--plugin P ...]
 modeldiff run SUITE --config CFG --output OUT [--tag T ...] [--capture full|hash|none]
               [--plugin P ...] [--enforce-performance] [--fail-on-failure]
-modeldiff compare BASELINE CANDIDATE [--format text|markdown|json] [--output FILE]
+modeldiff compare BASELINE CANDIDATE [--format text|markdown|json|junit] [--output FILE]
               [--latency-threshold PCT] [--min-latency-delta MS] [--fail-on-latency]
               [--allow-suite-mismatch] [--exit-zero]
 modeldiff report RESULTS [--format text|markdown|json] [--output FILE]
 modeldiff schema {suite,config,result} [--output FILE]
+```
+
+For CI integrations, `modeldiff compare --format junit` writes JUnit XML.
+Each comparison case becomes a `<testcase>`: regressions and still-failing
+cases are reported as `<failure>`, candidate execution errors as `<error>`,
+and cases missing from the candidate as `<skipped>`. Passing cases with
+changed output receive a `<system-out>` note; they are not counted as failures.
+Fixed and unchanged passing cases have no failure element. JUnit is supported
+by `compare`, not by the single-run `report` command.
+
+`validate` checks every supplied suite file, prints an `OK:` line for each valid
+file, and reports each invalid file on stderr. It checks the remaining files
+after an error and exits with code 2 if any file is invalid; otherwise it exits
+with code 0. Any `--plugin` options apply to all files:
+
+```bash
+modeldiff validate suites/support.yaml suites/billing.yaml --plugin checks.py
 ```
 
 | Exit code | Meaning |
@@ -304,7 +325,8 @@ modeldiff schema {suite,config,result} [--output FILE]
 
 Comparison reports show candidate per-case warnings, with `(new)` marking warnings absent from the baseline. JSON comparisons include `baseline_warnings` and `candidate_warnings` for every case. Warnings do not change regression counts or exit codes.
 
-`compare` refuses to compare runs of different suites. If the case definitions differ (the `suite_sha256` in the result files does not match), it also refuses unless you pass `--allow-suite-mismatch`. `python -m modeldiff` works the same as `modeldiff`.
+
+`compare` refuses to compare runs of different suites. New result files store a `case_sha256` for each case, so a full run and a `--tag` subset can be compared: cases left out are reported as missing. Changed definitions are rejected with the affected case IDs unless you pass `--allow-suite-mismatch`. If either run lacks any per-case hashes, comparison keeps the older `suite_sha256` check instead. `python -m modeldiff` works the same as `modeldiff`.
 
 ### JSON Schemas and editor support
 
@@ -423,11 +445,19 @@ These are ideas, not commitments. See the issue tracker for what is being worked
 
 - Repeated runs per case, with variance reported, to separate noise from change.
 - A chat/messages input format and a provider for OpenAI-compatible local servers (llama.cpp, vLLM, LM Studio).
-- JUnit XML output for CI systems.
 
 ## Contributing
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and look for issues labelled `good first issue`. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md). To report security issues, see [SECURITY.md](SECURITY.md).
+
+### One issue at a time
+
+To give everyone a chance, especially people making their first contribution:
+
+- Work on **one issue at a time**. Claim the next one after your pull request is merged.
+- Issues labelled `good first issue` are for **first-time contributors**. After your first merged pull request, please leave them for newcomers and pick `help wanted` or other issues instead.
+- Pull requests for issues that weren't assigned to you, or beyond the one-at-a-time limit, may be closed so others can take the issue.
+- If there's no update on an assigned issue for **7 days**, a maintainer may unassign it so someone else can take it. If you need more time, just comment on the issue.
 
 If ModelDiff is useful to you, a star on the repository helps other people find it. For project news, follow [OpenWave India on LinkedIn](https://www.linkedin.com/company/openwave-india).
 
@@ -445,6 +475,11 @@ Thanks to everyone who has contributed to ModelDiff. Contributors are added here
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Mrun25"><img src="https://avatars.githubusercontent.com/u/165297479?v=4?s=80" width="80px;" alt="Mrunmayee Daware"/><br /><sub><b>Mrunmayee Daware</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=Mrun25" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Mrun25" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Mrun25" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/faisalorakzai-lab"><img src="https://avatars.githubusercontent.com/u/176455968?v=4?s=80" width="80px;" alt="Faisal Orakzai"/><br /><sub><b>Faisal Orakzai</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=faisalorakzai-lab" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/SwetaKumari7"><img src="https://avatars.githubusercontent.com/u/210186755?v=4?s=80" width="80px;" alt="swetak"/><br /><sub><b>swetak</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=SwetaKumari7" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Doomguy-BFG9000"><img src="https://avatars.githubusercontent.com/u/307901355?v=4?s=80" width="80px;" alt="Doomguy"/><br /><sub><b>Doomguy</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=Doomguy-BFG9000" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/siddardh-core"><img src="https://avatars.githubusercontent.com/u/346924282?v=4?s=80" width="80px;" alt="Siddardha Darapureddy"/><br /><sub><b>Siddardha Darapureddy</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=siddardh-core" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=siddardh-core" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=siddardh-core" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/awais-ur-rehman"><img src="https://avatars.githubusercontent.com/u/75811924?v=4?s=80" width="80px;" alt="Awais Ur Rehman"/><br /><sub><b>Awais Ur Rehman</b></sub></a><br /><a href="https://github.com/OpenWave-India/modeldiff/commits?author=awais-ur-rehman" title="Code">💻</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=awais-ur-rehman" title="Tests">⚠️</a> <a href="https://github.com/OpenWave-India/modeldiff/commits?author=awais-ur-rehman" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

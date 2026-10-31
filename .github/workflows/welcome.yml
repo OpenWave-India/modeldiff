@@ -1,0 +1,39 @@
+name: Welcome
+
+# Greets people on their first issue or pull request in this repository.
+# Uses pull_request_target so it can comment on pull requests from forks.
+# It never checks out or runs code from the pull request.
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            Thanks for opening your first issue in ModelDiff! A maintainer will reply soon.
+
+            If you'd like to work on an issue, please read [Contributing](https://github.com/OpenWave-India/modeldiff/blob/main/CONTRIBUTING.md#picking-up-an-issue) first:
+
+            - Comment with your plan and **wait to be assigned** before starting.
+            - Work on **one issue at a time**. `good first issue` is for first-time contributors.
+            - If there's no update on an assigned issue for **7 days**, it may be given to someone else.
+          pr-message: |
+            Thanks for your first pull request to ModelDiff! A maintainer will review it soon. CI for first-time contributors starts after a maintainer approves it.
+
+            While you wait, please check that:
+
+            - The issue was **assigned to you** before you started (see [One issue at a time](https://github.com/OpenWave-India/modeldiff/blob/main/CONTRIBUTING.md#one-issue-at-a-time)).
+            - The description links the issue (`Closes #12`) and says how you tested the change.
+            - `pytest`, `ruff check src tests examples` and `ruff format --check src tests examples` pass locally.
+            - The **Files changed** tab shows only changes for this issue.

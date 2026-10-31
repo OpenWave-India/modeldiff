@@ -83,6 +83,12 @@ class TestCase:
     generation: dict[str, Any] = field(default_factory=dict)
     performance: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def sha256(self) -> str:
+        """Hash the normalized definition independently of other suite cases."""
+        canonical = json.dumps(_case_to_dict(self), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TestCase:
         return cls(**data)

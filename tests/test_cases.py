@@ -222,3 +222,10 @@ def test_filter_by_tag():
     s = parse_suite(suite({**EXACT, "tags": ["smoke"]}, {**EXACT, "id": "b"}))
     assert [c.id for c in s.filter(["smoke"]).cases] == ["a"]
     assert s.filter(None) is s
+
+
+def test_case_hash_stays_equal_after_filtering_and_changes_with_definition():
+    first = parse_suite(suite({**EXACT, "tags": ["smoke"]}, {**EXACT, "id": "b"}))
+    edited = parse_suite(suite({**EXACT, "tags": ["smoke"], "expected": "changed"}))
+    assert first.cases[0].sha256 == first.filter(["smoke"]).cases[0].sha256
+    assert first.cases[0].sha256 != edited.cases[0].sha256

@@ -74,6 +74,39 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Doomguy-BFG9000",
+      "name": "Doomguy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/307901355?v=4",
+      "profile": "https://github.com/Doomguy-BFG9000",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+    {
+      "login": "siddardh-core",
+      "name": "Siddardha Darapureddy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/346924282?v=4",
+      "profile": "https://github.com/siddardh-core",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
+    },
+    {
+      "login": "awais-ur-rehman",
+      "name": "Awais Ur Rehman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/75811924?v=4",
+      "profile": "https://github.com/awais-ur-rehman",
+      "contributions": [
+        "code",
+        "test",
+        "doc"
+      ]
     }
   ]
 }

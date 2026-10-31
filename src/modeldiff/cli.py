@@ -23,7 +23,12 @@ from modeldiff.compare import compare_runs
 from modeldiff.config import CAPTURE_MODES, CONFIG_SCHEMA, load_config
 from modeldiff.errors import ModelDiffError, ValidationError
 from modeldiff.providers import ReplayProvider, build_provider
-from modeldiff.report import FORMATS, render_comparison, render_run
+from modeldiff.report import (
+    COMPARISON_FORMATS,
+    FORMATS,
+    render_comparison,
+    render_run,
+)
 from modeldiff.results import RESULT_SCHEMA, load_run, save_run
 from modeldiff.runner import run_suite
 
@@ -59,15 +64,22 @@ def _emit(text: str, output: str | None) -> None:
 def cmd_validate(args: argparse.Namespace) -> int:
     for plugin in args.plugin:
         load_plugin(plugin)
-    suite = load_suite(args.suite)
-    types: dict[str, int] = {}
-    for case in suite.cases:
-        types[case.type] = types.get(case.type, 0) + 1
-    breakdown = ", ".join(f"{n} {t}" for t, n in sorted(types.items()))
-    print(
-        f"OK: {args.suite} defines suite {suite.name!r} with {len(suite.cases)} cases ({breakdown})"
-    )
-    return EXIT_OK
+    status = EXIT_OK
+    for path in args.suite:
+        try:
+            suite = load_suite(path)
+        except ValidationError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            status = EXIT_INVALID
+            continue
+        types: dict[str, int] = {}
+        for case in suite.cases:
+            types[case.type] = types.get(case.type, 0) + 1
+        breakdown = ", ".join(f"{n} {t}" for t, n in sorted(types.items()))
+        print(
+            f"OK: {path} defines suite {suite.name!r} with {len(suite.cases)} cases ({breakdown})"
+        )
+    return status
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -147,8 +159,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     plugin_help = "module or .py file that registers custom checks (repeatable)"
 
-    p = sub.add_parser("validate", help="check a suite file for errors")
-    p.add_argument("suite", help="suite file (.yaml, .yml or .json)")
+    p = sub.add_parser("validate", help="check suite files for errors")
+    p.add_argument("suite", nargs="+", help="suite files (.yaml, .yml or .json)")
     p.add_argument("--plugin", action="append", default=[], help=plugin_help)
     p.set_defaults(func=cmd_validate)
 
@@ -174,7 +186,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("compare", help="compare a baseline result file with a candidate")
     p.add_argument("baseline", help="baseline result JSON")
     p.add_argument("candidate", help="candidate result JSON")
-    p.add_argument("--format", "-f", choices=FORMATS, default="text")
+    p.add_argument("--format", "-f", choices=COMPARISON_FORMATS, default="text")
     p.add_argument("--output", "-o", help="write the report to a file instead of stdout")
     p.add_argument(
         "--latency-threshold",
