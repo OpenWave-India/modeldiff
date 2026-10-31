@@ -1,0 +1,68 @@
+suite: multilingual-sentiment-extraction
+description: >
+  Hindi and Tamil cases covering sentiment classification, JSON extraction and
+  one exact answer. The outputs in recorded/ are hand-written fixtures; they
+  were not produced by a real model. The wording was drafted with an AI
+  assistant and should be confirmed by a native speaker of each language.
+cases:
+  - id: hindi-sentiment-positive
+    type: classification
+    input: |
+      इस समीक्षा का भाव क्या है? केवल एक शब्द में उत्तर दें: सकारात्मक, तटस्थ या नकारात्मक।
+      समीक्षा: "मुझे यह किताब बहुत पसंद आई। भाषा सरल है और उदाहरण रोज़मर्रा की ज़िंदगी से लिए गए हैं।"
+    expected: सकारात्मक
+    labels: [सकारात्मक, तटस्थ, नकारात्मक]
+    tags: [hindi, classification]
+  - id: hindi-sentiment-neutral
+    type: classification
+    input: |
+      इस समीक्षा का भाव क्या है? केवल एक शब्द में उत्तर दें: सकारात्मक, तटस्थ या नकारात्मक।
+      समीक्षा: "सेवा ठीक थी, न बहुत अच्छी न बुरी। काम समय पर हो गया।"
+    expected: तटस्थ
+    labels: [सकारात्मक, तटस्थ, नकारात्मक]
+    tags: [hindi, classification]
+  - id: tamil-sentiment-positive
+    type: classification
+    input: |
+      இந்த விமர்சனத்தின் உணர்வு என்ன? ஒரு சொல்லில் மட்டும் பதிலளிக்கவும்: நேர்மறை, நடுநிலை அல்லது எதிர்மறை.
+      விமர்சனம்: "இந்தப் படம் மிகவும் அருமையாக இருந்தது. இசையும் நடிப்பும் நினைவில் நிற்கின்றன."
+    expected: நேர்மறை
+    labels: [நேர்மறை, நடுநிலை, எதிர்மறை]
+    tags: [tamil, classification]
+  - id: hindi-order-json
+    type: json
+    input: |
+      इस संदेश से ऑर्डर की जानकारी निकालें और JSON में दें:
+      "ऑर्डर संख्या 4821, विक्रेता मेहता ट्रेडर्स, कुल राशि 3450 रुपये, शहर जयपुर।"
+    schema:
+      type: object
+      required: [order_id, vendor, amount, currency, city]
+      properties:
+        order_id: {type: string}
+        vendor: {type: string}
+        amount: {type: number, exclusiveMinimum: 0}
+        currency: {enum: [INR, USD, EUR]}
+        city: {type: string}
+      additionalProperties: false
+    tags: [hindi, structured]
+  - id: tamil-event-json
+    type: json
+    input: |
+      இந்த அறிவிப்பிலிருந்து நிகழ்வின் விவரங்களை எடுத்து JSON ஆக வழங்கவும்:
+      "நிகழ்வு: இசை மாலை, இடம்: சென்னை, தேதி: 12 நவம்பர் 2026."
+    schema:
+      type: object
+      required: [event, venue, date]
+      properties:
+        event: {type: string}
+        venue: {type: string}
+        date: {type: string, format: date}
+        notes: {type: string}
+      additionalProperties: false
+    tags: [tamil, structured]
+  - id: hindi-exact-answer
+    type: exact
+    input: |
+      ग्राहक ने पूछा: "क्या मेरा भुगतान प्राप्त हुआ?" केवल एक वाक्य में उत्तर दें।
+    expected: हाँ, आपका भुगतान प्राप्त हो गया है।
+    tags: [hindi, exact]

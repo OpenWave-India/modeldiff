@@ -15,6 +15,7 @@ from modeldiff.cases import read_document
 from modeldiff.cli import main
 
 EXTRACTION = Path(__file__).resolve().parents[1] / "examples" / "extraction"
+MULTILINGUAL = Path(__file__).resolve().parents[1] / "examples" / "multilingual"
 
 
 @pytest.fixture
@@ -351,6 +352,43 @@ def test_extraction_example_reports_regressions_and_behavior_change(tmp_path, ca
     assert "billing-address [required_fields] pass -> fail" in out
     assert "Passing with changed output (review, not a regression) (1)" in out
     assert "payment-status [json] pass -> pass" in out
+
+
+def test_multilingual_example_reports_regressions_and_behavior_change(tmp_path, capsys):
+    baseline = tmp_path / "multilingual-baseline.json"
+    candidate = tmp_path / "multilingual-candidate.json"
+    suite = str(MULTILINGUAL / "suite.yaml")
+    assert main(["validate", suite]) == 0
+    for config, output in (("baseline", baseline), ("candidate", candidate)):
+        assert (
+            main(
+                [
+                    "run",
+                    suite,
+                    "--config",
+                    str(MULTILINGUAL / "configs" / f"{config}.yaml"),
+                    "--output",
+                    str(output),
+                ]
+            )
+            == 0
+        )
+    assert main(["compare", str(baseline), str(candidate)]) == 1
+    out = capsys.readouterr().out
+    assert "REGRESSIONS FOUND (3)" in out
+    assert "hindi-sentiment-positive [classification] pass -> fail" in out
+    assert "tamil-sentiment-positive [classification] pass -> fail" in out
+    assert "hindi-order-json [json] pass -> fail" in out
+    assert "Passing with changed output (review, not a regression) (1)" in out
+    assert "tamil-event-json [json] pass -> pass" in out
+
+
+def test_multilingual_fixtures_are_labelled_hand_written():
+    for name in ("baseline.json", "candidate.json"):
+        fixture = json.loads((MULTILINGUAL / "recorded" / name).read_text(encoding="utf-8"))
+        assert "hand-written" in fixture["metadata"]["note"].lower()
+    suite = (MULTILINGUAL / "suite.yaml").read_text(encoding="utf-8")
+    assert "hand-written fixtures" in suite
 
 
 def test_compare_same_run_has_no_regressions(runs):

@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "note": "Hand-written fixture outputs for the multilingual example. Not produced by a real model."
+  },
+  "outputs": {
+    "hindi-sentiment-positive": {
+      "output": "नकारात्मक",
+      "latency_ms": 265
+    },
+    "hindi-sentiment-neutral": {
+      "output": "तटस्थ",
+      "latency_ms": 230
+    },
+    "tamil-sentiment-positive": {
+      "output": "நடுநிலை",
+      "latency_ms": 335
+    },
+    "hindi-order-json": {
+      "output": "{\"order_id\": \"4821\", \"vendor\": \"मेहता ट्रेडर्स\", \"amount\": 3450, \"city\": \"जयपुर\"}",
+      "latency_ms": 545
+    },
+    "tamil-event-json": {
+      "output": "{\"event\": \"இசை மாலை\", \"venue\": \"சென்னை\", \"date\": \"2026-11-12\", \"notes\": \"நுழைவு இலவசம்\"}",
+      "latency_ms": 500
+    },
+    "hindi-exact-answer": {
+      "output": "हाँ, आपका भुगतान प्राप्त हो गया है।",
+      "latency_ms": 175
+    }
+  }
+}
