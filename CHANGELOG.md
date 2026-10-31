@@ -20,6 +20,7 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 ### Fixed
 
 - A `--tag`-filtered run can be compared with a full run of the same suite. Result files now store a `case_sha256` per case, and changed definitions are reported by case ID ([#38](https://github.com/OpenWave-India/modeldiff/pull/38), by [@Mrun25](https://github.com/Mrun25), fixes [#12](https://github.com/OpenWave-India/modeldiff/issues/12)).
+- Reports with non-ASCII text, such as Hindi or emoji, no longer crash on Windows when stdout is redirected to a file or pipe. The CLI now writes UTF-8 ([#32](https://github.com/OpenWave-India/modeldiff/pull/32), by [@hamid-digitalmarketer](https://github.com/hamid-digitalmarketer), fixes [#24](https://github.com/OpenWave-India/modeldiff/issues/24)).
 
 ## [0.1.0] - 2026-10-29
 
