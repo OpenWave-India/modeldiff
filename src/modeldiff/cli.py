@@ -132,7 +132,7 @@ def cmd_schema(args: argparse.Namespace) -> int:
     schema["title"] = {
         "suite": "ModelDiff test suite",
         "config": "ModelDiff run configuration",
-        "result": "ModelDiff result file",
+        "result": "ModelDiff run result",
     }[args.kind]
     _emit(json.dumps(schema, indent=2), args.output)
     return EXIT_OK
