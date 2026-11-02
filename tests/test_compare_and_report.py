@@ -162,6 +162,27 @@ def test_latency_summary_and_threshold():
     assert comp.latency.change_pct == pytest.approx(30.0)
 
 
+@pytest.mark.parametrize("fmt", ["text", "markdown"])
+def test_latency_below_display_precision_has_no_percentage(fmt):
+    # Replay runs take microseconds; 0.02 ms -> 0.01 ms must not read as -50%.
+    comp = compare_runs(
+        make_run("b", case("a", "pass", duration=0.02)),
+        make_run("c", case("a", "pass", duration=0.01)),
+    )
+    report = render_comparison(comp, fmt)
+    assert "0.0 ms -> 0.0 ms (no measurable change;" in report
+    assert "%" not in report.split("Latency")[1].splitlines()[0]
+
+
+@pytest.mark.parametrize(("candidate", "shown"), [(100.1, "+0.1%"), (90.0, "-10.0%")])
+def test_latency_percentage_shown_for_measurable_change(candidate, shown):
+    comp = compare_runs(
+        make_run("b", case("a", "pass", duration=100.0)),
+        make_run("c", case("a", "pass", duration=candidate)),
+    )
+    assert f"({shown};" in render_comparison(comp)
+
+
 def test_latency_missing_durations_are_skipped():
     comp = compare_runs(
         make_run("b", case("a", "pass", duration=None)), make_run("c", case("a", "pass"))

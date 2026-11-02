@@ -55,6 +55,8 @@ pip install "openwave-modeldiff[memory]"   # optional: per-case process memory v
 
 The package is named `openwave-modeldiff` on PyPI because `modeldiff` is taken by an unrelated project. The import name and the command are both `modeldiff`.
 
+If your shell says `modeldiff` is not found (common on Windows, where pip warns that its `Scripts` folder is not on `PATH`), run `python -m modeldiff` instead. It accepts the same arguments.
+
 To work from a clone instead, for example to contribute:
 
 ```bash
@@ -72,9 +74,69 @@ pip install -e ".[memory]"   # per-case process memory via psutil
 pip install -e ".[dev]"      # pytest and ruff for development
 ```
 
+## Try it in two minutes
+
+After `pip install openwave-modeldiff`, create these five files in an empty folder. They describe three test cases and the answers of two models, written by hand so that no model is needed.
+
+`suite.yaml`, the test cases:
+
+```yaml
+suite: my-first-test
+cases:
+  - id: sentiment
+    type: classification
+    input: "Is this review positive or negative? 'I loved this phone!'"
+    expected: positive
+    labels: [positive, negative]
+  - id: capital
+    type: exact
+    input: "What is the capital of India? Answer in one word."
+    expected: New Delhi
+  - id: order
+    type: json
+    input: "Return the order as JSON: order 42, amount 500"
+    schema:
+      type: object
+      required: [order_id, amount]
+```
+
+`old.json` and `new.json`, the answers of an old and a new model:
+
+```json
+{"outputs": {"sentiment": "positive", "capital": "New Delhi", "order": "{\"order_id\": 42, \"amount\": 500}"}}
+```
+
+```json
+{"outputs": {"sentiment": "negative", "capital": "New Delhi", "order": "Sure! Here is your order: 42"}}
+```
+
+`old.yaml` and `new.yaml`, one run configuration for each:
+
+```yaml
+id: old-model
+provider: replay
+outputs: old.json
+```
+
+```yaml
+id: new-model
+provider: replay
+outputs: new.json
+```
+
+Then run both and compare:
+
+```bash
+modeldiff run suite.yaml --config old.yaml --output old-result.json
+modeldiff run suite.yaml --config new.yaml --output new-result.json
+modeldiff compare old-result.json new-result.json
+```
+
+The comparison reports two regressions: the sentiment label flipped, and the order is no longer valid JSON. To test a real model instead of saved answers, replace a configuration with an Ollama one (see [Using a local model](#using-a-local-model-optional)).
+
 ## Quick start
 
-The repository includes an example suite for a customer-support assistant, with two sets of recorded outputs. These outputs are hand-written fixtures that illustrate typical regressions. They are not real model outputs.
+This walkthrough uses the example files in the repository, so clone it first (`git clone https://github.com/OpenWave-India/modeldiff.git` and `cd modeldiff`). The repository includes an example suite for a customer-support assistant, with two sets of recorded outputs. These outputs are hand-written fixtures that illustrate typical regressions. They are not real model outputs.
 
 ```bash
 # 1. Check the suite file. The example uses a custom check defined in checks.py.

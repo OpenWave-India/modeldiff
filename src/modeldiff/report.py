@@ -87,7 +87,14 @@ def _latency_lines(comp: Comparison) -> list[str]:
     if lat is None:
         return ["Latency: no timing data in both runs."]
     pct = lat.change_pct
-    change = "n/a" if pct is None else f"{pct:+.1f}%"
+    if abs(lat.candidate_median_ms - lat.baseline_median_ms) < 0.05:
+        # Below the 0.1 ms display precision, for example replay runs that take
+        # microseconds. A percentage of such noise would look like a real change.
+        change = "no measurable change"
+    elif pct is None:
+        change = "n/a"
+    else:
+        change = f"{pct:+.1f}%"
     sources = (
         f"baseline {'/'.join(lat.baseline_sources)}, candidate {'/'.join(lat.candidate_sources)}"
     )

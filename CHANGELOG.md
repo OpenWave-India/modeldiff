@@ -4,6 +4,14 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Fixed
+
+- The latency summary no longer shows a percentage for differences below 0.1 ms, such as replay runs that take microseconds, where `0.0 ms -> 0.0 ms (-50.0%)` looked like a real change.
+
+### Documentation
+
+- "Try it in two minutes" in the README shows a complete example that works after `pip install`, without cloning the repository, and the installation section explains `python -m modeldiff` for when the command is not on `PATH`.
+
 ## [0.2.0] - 2026-11-02
 
 First release with community contributions, and the first release published on PyPI as `openwave-modeldiff`.
