@@ -4,6 +4,10 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-02
+
+First release with community contributions, and the first release published on PyPI as `openwave-modeldiff`.
+
 ### Added
 
 - `normalize_whitespace` option for `exact` checks: collapses runs of whitespace, including newlines, before comparing ([#16](https://github.com/OpenWave-India/modeldiff/pull/16), by [@anant-rajj](https://github.com/anant-rajj), fixes [#4](https://github.com/OpenWave-India/modeldiff/issues/4)).
@@ -42,5 +46,6 @@ First public release.
 
 - `required_fields` values and `tool_call` arguments now compare by JSON type, so `true` no longer matches `1` ([#14](https://github.com/OpenWave-India/modeldiff/pull/14), by [@bfs2021](https://github.com/bfs2021), fixes [#1](https://github.com/OpenWave-India/modeldiff/issues/1)).
 
-[Unreleased]: https://github.com/OpenWave-India/modeldiff/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/OpenWave-India/modeldiff/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/OpenWave-India/modeldiff/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/OpenWave-India/modeldiff/releases/tag/v0.1.0

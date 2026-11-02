@@ -49,6 +49,15 @@ What ModelDiff does **not** do: it does not judge semantic correctness, factuali
 Requires Python 3.11 or newer.
 
 ```bash
+pip install openwave-modeldiff
+pip install "openwave-modeldiff[memory]"   # optional: per-case process memory via psutil
+```
+
+The package is named `openwave-modeldiff` on PyPI because `modeldiff` is taken by an unrelated project. The import name and the command are both `modeldiff`.
+
+To work from a clone instead, for example to contribute:
+
+```bash
 git clone https://github.com/OpenWave-India/modeldiff.git
 cd modeldiff
 python -m venv .venv
@@ -62,8 +71,6 @@ Optional extras:
 pip install -e ".[memory]"   # per-case process memory via psutil
 pip install -e ".[dev]"      # pytest and ruff for development
 ```
-
-The package is not yet published to PyPI. When it is, the distribution name will be `openwave-modeldiff`, because the name `modeldiff` is already taken on PyPI by an unrelated project. The import name and the command are both `modeldiff`.
 
 ## Quick start
 
