@@ -1,16 +1,20 @@
 """Inference providers.
 
-A provider turns a test case into a model output. Two are included:
+A provider turns a test case into a model output. Three are included:
 
 * ``replay`` reads outputs recorded earlier from a JSON file. It needs no
   model and is what the examples and test suite use.
 * ``ollama`` calls a local Ollama server over HTTP using only the standard
   library. It is never used unless a config selects it.
+* ``openai_compatible`` calls any OpenAI-compatible ``/v1/chat/completions``
+  endpoint (llama.cpp ``llama-server``, vLLM, LM Studio, etc.) using only the
+  standard library.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -186,6 +190,110 @@ class OllamaProvider:
             raise ProviderError("version lookup failed") from None
 
 
+class OpenAICompatibleProvider:
+    """Generate outputs via an OpenAI-compatible ``/v1/chat/completions`` endpoint.
+
+    Works with local servers such as llama.cpp's ``llama-server``, vLLM, and
+    LM Studio. Uses only the standard library. An API key is optional and is
+    read from an environment variable named by ``api_key_env``; the key itself
+    is never written to result files.
+    """
+
+    name = "openai_compatible"
+
+    def __init__(
+        self,
+        model: str,
+        base_url: str,
+        options: dict[str, Any] | None = None,
+        system: str | None = None,
+        timeout_s: float = 120.0,
+        api_key_env: str | None = None,
+    ) -> None:
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+        self.options = options or {}
+        self.system = system
+        self.timeout_s = timeout_s
+        self.api_key_env = api_key_env
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key_env:
+            key = os.environ.get(self.api_key_env)
+            if key:
+                headers["Authorization"] = f"Bearer {key}"
+        return headers
+
+    def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+        body = json.dumps(payload).encode("utf-8")
+        request = urllib.request.Request(
+            self.base_url + path, data=body, headers=self._headers()
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                raw = response.read()
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:300]
+            raise ProviderError(
+                f"OpenAI-compatible server returned HTTP {exc.code}: {detail}"
+            ) from None
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+            reason = getattr(exc, "reason", exc)
+            raise ProviderError(
+                f"could not reach OpenAI-compatible server at {self.base_url} ({reason})"
+            ) from None
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            raise ProviderError(
+                "OpenAI-compatible server returned a response that is not JSON"
+            ) from None
+
+    def generate(self, case: TestCase) -> ProviderResponse:
+        messages: list[dict[str, str]] = []
+        if self.system is not None:
+            messages.append({"role": "system", "content": self.system})
+        messages.append({"role": "user", "content": case.input})
+
+        payload: dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            # Case-level generation settings override the config's options.
+            **self.options,
+            **case.generation,
+        }
+        data = self._post("/chat/completions", payload)
+
+        if "error" in data:
+            err = data["error"]
+            msg = err.get("message") if isinstance(err, dict) else str(err)
+            raise ProviderError(f"OpenAI-compatible server error: {msg}")
+
+        choices = data.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise ProviderError("OpenAI-compatible response has no choices")
+        message = choices[0].get("message") if isinstance(choices[0], dict) else None
+        if not isinstance(message, dict) or not isinstance(message.get("content"), str):
+            raise ProviderError("OpenAI-compatible response has no message content")
+
+        metadata: dict[str, Any] = {}
+        if "model" in data:
+            metadata["model"] = data["model"]
+        usage = data.get("usage")
+        if isinstance(usage, dict):
+            metadata["usage"] = usage
+        return ProviderResponse(message["content"], metadata)
+
+    def describe(self) -> dict[str, Any]:
+        return {
+            "provider": "openai_compatible",
+            "model": self.model,
+            "base_url": self.base_url,
+        }
+
+
 def build_provider(config: RunConfig) -> Provider:
     s = config.settings
     if config.provider == "replay":
@@ -198,5 +306,14 @@ def build_provider(config: RunConfig) -> Provider:
             format=s.get("format"),
             system=s.get("system"),
             timeout_s=s.get("timeout_s", 120.0),
+        )
+    if config.provider == "openai_compatible":
+        return OpenAICompatibleProvider(
+            model=s["model"],
+            base_url=s["base_url"],
+            options=s.get("options"),
+            system=s.get("system"),
+            timeout_s=s.get("timeout_s", 120.0),
+            api_key_env=s.get("api_key_env"),
         )
     raise ValidationError("config", [f"unknown provider {config.provider!r}"])
