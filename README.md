@@ -161,7 +161,7 @@ city, producing regressions for `invoice-json` and `billing-address`. It also
 adds a valid payment-method field to `payment-status`, which is reported as a
 passing output change rather than a regression.
 
-The `examples/multilingual` suite does the same for Hindi and Tamil: two
+The `examples/multilingual` suite does the same for Hindi and Tamil: three
 sentiment classifications, two JSON extractions and one exact answer, all with
 non-ASCII input and output. Its fixtures are hand-written too, so the run stays
 deterministic and offline:
@@ -181,9 +181,7 @@ The candidate flips one Hindi and one Tamil sentiment label and drops the
 `currency` field from the Hindi order, producing regressions for
 `hindi-sentiment-positive`, `tamil-sentiment-positive` and `hindi-order-json`.
 It also adds a `notes` field to `tamil-event-json`, which is reported as a
-passing output change rather than a regression. On Windows, redirecting this
-report to a pipe or file only works once the UTF-8 output fix is in place;
-calling `main()` directly, as the tests do, is unaffected.
+passing output change rather than a regression.
 
 ## Writing test cases
 
