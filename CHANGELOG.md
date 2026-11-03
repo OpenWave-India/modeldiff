@@ -11,6 +11,7 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 ### Documentation
 
 - "Try it in two minutes" in the README shows a complete example that works after `pip install`, without cloning the repository, and the installation section explains `python -m modeldiff` for when the command is not on `PATH`.
+- The README starts with a one-line summary, the install command and a demo GIF recorded from real output. The GIF uses an absolute link so it also shows on PyPI. `docs/social-preview.png` is the image for the GitHub social preview.
 
 ## [0.2.0] - 2026-11-02
 

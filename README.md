@@ -1,10 +1,19 @@
 # ModelDiff
 
 [![CI](https://github.com/OpenWave-India/modeldiff/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenWave-India/modeldiff/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/openwave-modeldiff.svg)](https://pypi.org/project/openwave-modeldiff/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 
-**Regression testing for local AI.**
+**Regression testing for local AI: find out what broke before you swap a model, quantization or prompt.**
+
+```bash
+pip install openwave-modeldiff
+```
+
+![ModelDiff comparing an old and a new model and reporting two regressions](https://raw.githubusercontent.com/OpenWave-India/modeldiff/main/docs/demo.gif)
+
+The demo above is the [two-minute example](#try-it-in-two-minutes) below, recorded from real output. It needs no model, no API key and no clone of this repository.
 
 ModelDiff is a local-first testing framework for detecting behavioral regressions across AI model versions, inference configurations, prompt templates, and runtime changes. You describe test cases in a version-controlled YAML or JSON file, run them against a baseline and a candidate configuration, and get a report of what broke, what got fixed, and what merely changed.
 
