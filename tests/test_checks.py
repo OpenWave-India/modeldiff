@@ -334,3 +334,28 @@ def test_registering_a_different_function_twice_fails():
         @register_check("dup")
         def second(case, output):
             return True
+
+
+@pytest.mark.parametrize(
+    "path, data",
+    [
+        (r"metadata.app\.version", {"metadata": {"app.version": "ok"}}),
+        (r"items.0.app\.version", {"items": [{"app.version": "ok"}]}),
+        (r"a\\b", {r"a\b": "ok"}),
+        ("trailing" + chr(92), {"trailing" + chr(92): "ok"}),
+        (r"other\escape", {r"other\escape": "ok"}),
+        ("a..b", {"a": {"": {"b": "ok"}}}),
+        ("items.0.sku", {"items": [{"sku": "ok"}]}),
+    ],
+)
+def test_required_fields_escaped_paths(make_case, path, data):
+    case = make_case(type="required_fields", required=[path], values={path: "ok"})
+    assert evaluate(case, json.dumps(data)).passed
+
+
+def test_required_fields_missing_escaped_path_keeps_spelling(make_case):
+    path = r"metadata.app\.version"
+    case = make_case(type="required_fields", required=[path], values={path: "ok"})
+    result = evaluate(case, '{"metadata": {}}')
+    assert not result.passed
+    assert path in result.reason
