@@ -69,6 +69,17 @@ Unknown case fields are rejected. Additional semantic validation may apply depen
 
 The meaning and validation of these fields are determined by the corresponding check implementation. Do not assume that every optional field is meaningful for every case type.
 
+### Required field paths
+
+For `required_fields`, escape a literal dot in a key with `\.` and a literal
+backslash with `\\`. For example, `metadata.app\.version` addresses the key
+`app.version` inside `metadata`; `items.0.app\.version` combines a list index
+with a dotted key. Other backslashes, including a trailing backslash, stay literal.
+These rules apply to both `required` and `values`; failure reasons preserve the
+path as written. In YAML, single-quote these paths (for example,
+`'metadata.app\.version'`); in JSON strings, double each backslash.
+
+
 ### Quickstart example
 
 This excerpt follows the checked-in `examples/quickstart/suite.yaml` fixture:

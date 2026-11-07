@@ -277,6 +277,15 @@ show the first ten followed by `...`.
 
 Dotted paths address nested objects and list items: `customer.name`, `items.0.sku`.
 
+For `required_fields`, escape a literal dot in a key with `\.` and a literal
+backslash with `\\`. For example, `metadata.app\.version` addresses the key
+`app.version` inside `metadata`; `items.0.app\.version` combines a list index
+with a dotted key. Other backslashes, including a trailing backslash, stay literal.
+These rules apply to both `required` and `values`; failure reasons preserve the
+path as written. In YAML, single-quote these paths (for example,
+`'metadata.app\.version'`); in JSON strings, double each backslash.
+
+
 `options: {extract: code_fence}` extracts content from a single Markdown code fence (e.g. ```` ```json ... ``` ````) before parsing. If the output does not contain exactly one fenced block, the whole output is parsed.
 
 `values` and `expected.arguments` compare by JSON type: a boolean never equals a number, so `true` does not match `1`, while `1` and `1.0` are equal. Nested objects and lists compare the same way.

@@ -131,13 +131,32 @@ def _schema_failures(schema: dict[str, Any], instance: Any) -> list[str]:
 _MISSING = object()
 
 
+def _split_path(path: str) -> list[str]:
+    parts: list[str] = []
+    part: list[str] = []
+    index = 0
+    while index < len(path):
+        char = path[index]
+        if char == "\\" and index + 1 < len(path) and path[index + 1] in (".", "\\"):
+            index += 1
+            part.append(path[index])
+        elif char == ".":
+            parts.append("".join(part))
+            part = []
+        else:
+            part.append(char)
+        index += 1
+    parts.append("".join(part))
+    return parts
+
+
 def lookup_path(data: Any, path: str) -> Any:
     """Resolve a dotted path such as ``user.addresses.0.city``.
 
     Returns the sentinel ``_MISSING`` when any segment does not exist.
     """
     current = data
-    for part in path.split("."):
+    for part in _split_path(path):
         if isinstance(current, dict):
             if part not in current:
                 return _MISSING
