@@ -4,6 +4,10 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+
+- `required_fields` paths can address keys that contain dots: `\.` is a literal dot and `\` a literal backslash, for example `metadata.app\.version` (#46, @Mrun25, fixes #31).
+
 ### Fixed
 
 - The latency summary no longer shows a percentage for differences below 0.1 ms, such as replay runs that take microseconds, where `0.0 ms -> 0.0 ms (-50.0%)` looked like a real change.
