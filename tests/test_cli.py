@@ -630,3 +630,80 @@ def test_compare_edited_case_names_definition_change(tmp_path, quickstart, capsy
     capsys.readouterr()
     assert main(["compare", str(base), str(candidate)]) == 2
     assert load_suite(edited).cases[0].id in capsys.readouterr().err
+
+
+def test_init_generates_a_valid_offline_starter_project(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "my-tests"]) == 0
+    capsys.readouterr()
+
+    project = tmp_path / "my-tests"
+    assert main(["validate", str(project / "suite.yaml")]) == 0
+    capsys.readouterr()
+
+    baseline = project / "out" / "baseline.json"
+    candidate = project / "out" / "candidate.json"
+    assert (
+        main(
+            [
+                "run",
+                str(project / "suite.yaml"),
+                "--config",
+                str(project / "configs" / "baseline.yaml"),
+                "--output",
+                str(baseline),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert (
+        main(
+            [
+                "run",
+                str(project / "suite.yaml"),
+                "--config",
+                str(project / "configs" / "candidate.yaml"),
+                "--output",
+                str(candidate),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    assert main(["compare", str(baseline), str(candidate)]) == 0
+
+    for fixture in ("baseline.json", "candidate.json"):
+        data = json.loads((project / "recorded" / fixture).read_text(encoding="utf-8"))
+        assert "PLACEHOLDER" in data["metadata"]["note"]
+
+
+def test_init_refuses_non_empty_directory_without_force(tmp_path, capsys):
+    project = tmp_path / "existing"
+    project.mkdir()
+    keep = project / "keep.txt"
+    keep.write_text("keep", encoding="utf-8")
+
+    assert main(["init", str(project)]) == 2
+    captured = capsys.readouterr()
+    assert "--force" in captured.err
+    assert keep.read_text(encoding="utf-8") == "keep"
+    assert not (project / "suite.yaml").exists()
+
+
+def test_init_force_preserves_unrelated_files(tmp_path, capsys):
+    project = tmp_path / "existing"
+    project.mkdir()
+    keep = project / "notes.txt"
+    keep.write_text("do not remove", encoding="utf-8")
+    (project / "suite.yaml").write_text("old content", encoding="utf-8")
+
+    assert main(["init", str(project), "--force"]) == 0
+    capsys.readouterr()
+
+    assert keep.read_text(encoding="utf-8") == "do not remove"
+    assert "suite: my-tests" in (project / "suite.yaml").read_text(encoding="utf-8")
+    assert (project / "configs" / "baseline.yaml").is_file()
+    assert (project / "configs" / "candidate.yaml").is_file()
+    assert (project / "recorded" / "baseline.json").is_file()
+    assert (project / "recorded" / "candidate.json").is_file()
