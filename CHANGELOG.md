@@ -6,7 +6,7 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 
 ### Added
 
-- `required_fields` paths can address keys that contain dots: `\.` is a literal dot and `\` a literal backslash, for example `metadata.app\.version` (#46, @Mrun25, fixes #31).
+- `required_fields` paths can address keys that contain dots: `\.` is a literal dot and `\\` a literal backslash, for example `metadata.app\.version` (#46, @Mrun25, fixes #31).
 
 ### Fixed
 
