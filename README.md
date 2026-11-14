@@ -85,11 +85,6 @@ pip install -e ".[dev]"      # pytest and ruff for development
 
 ## Try it in two minutes
 
-For a ready-to-edit project, run `modeldiff init my-tests`. It creates a two-case
-suite, replay configs and clearly labelled placeholder outputs. The generated
-baseline and candidate compare cleanly offline; replace the fixtures with real
-model outputs when you are ready.
-
 After `pip install openwave-modeldiff`, create these five files in an empty folder. They describe three test cases and the answers of two models, written by hand so that no model is needed.
 
 `suite.yaml`, the test cases:
@@ -147,6 +142,12 @@ modeldiff compare old-result.json new-result.json
 ```
 
 The comparison reports two regressions: the sentiment label flipped, and the order is no longer valid JSON. To test a real model instead of saved answers, replace a configuration with an Ollama one (see [Using a local model](#using-a-local-model-optional)).
+
+In the next release, `modeldiff init my-tests` will create a ready-to-edit
+two-case suite, replay configs and clearly labelled placeholder outputs. The
+generated baseline and candidate compare cleanly offline; replace the fixtures
+with real model outputs when you are ready.
+
 
 ## Quick start
 
