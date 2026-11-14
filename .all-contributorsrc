@@ -117,6 +117,17 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "tnalbant",
+      "name": "timtim",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182372382?v=4",
+      "profile": "https://github.com/tnalbant",
+      "contributions": [
+        "example",
+        "test",
+        "doc"
+      ]
     }
   ]
 }
