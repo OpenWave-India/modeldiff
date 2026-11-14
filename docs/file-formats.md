@@ -395,6 +395,6 @@ By default, ModelDiff refuses to compare runs with different suite names or diff
 
 ## Related documentation
 
-- [README](../README.md) — quickstart, case types, configuration, CLI, result capture, and measurements.
-- [Contributing guide](../CONTRIBUTING.md) — development setup, checks, and contribution expectations.
-- [Architecture](architecture.md) — module responsibilities and design decisions.
+- [README](../README.md) â€” quickstart, case types, configuration, CLI, result capture, and measurements.
+- [Contributing guide](../CONTRIBUTING.md) â€” development setup, checks, and contribution expectations.
+- [Architecture](architecture.md) â€” module responsibilities and design decisions.

@@ -46,7 +46,7 @@ modeldiff compare out/b.json out/c.json
 
 ## Picking up an issue
 
-1. Look for issues labelled [`good first issue`](../../issues?q=is%3Aopen+label%3A%22good+first+issue%22) or [`help wanted`](../../issues?q=is%3Aopen+label%3A%22help+wanted%22).
+1. Look for issues labelled [`good first issue`](https://github.com/OpenWave-India/modeldiff/issues?q=is%3Aopen+label%3A%22good+first+issue%22) or [`help wanted`](https://github.com/OpenWave-India/modeldiff/issues?q=is%3Aopen+label%3A%22help+wanted%22).
 2. Comment on the issue to say you are working on it, so others do not duplicate the work. If you stop, say so, so that someone else can pick it up.
 3. Ask questions on the issue if anything is unclear. Every issue lists acceptance criteria, which are what reviewers will check.
 
