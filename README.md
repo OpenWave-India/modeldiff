@@ -148,7 +148,6 @@ two-case suite, replay configs and clearly labelled placeholder outputs. The
 generated baseline and candidate compare cleanly offline; replace the fixtures
 with real model outputs when you are ready.
 
-
 ## Quick start
 
 This walkthrough uses the example files in the repository, so clone it first (`git clone https://github.com/OpenWave-India/modeldiff.git` and `cd modeldiff`). The repository includes an example suite for a customer-support assistant, with two sets of recorded outputs. These outputs are hand-written fixtures that illustrate typical regressions. They are not real model outputs.
