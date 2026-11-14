@@ -94,7 +94,6 @@ provider: replay
 outputs: ../recorded/candidate.json
 capture_output: full
 """,
-
 }
 
 
