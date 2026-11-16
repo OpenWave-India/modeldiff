@@ -73,6 +73,8 @@ def _summary_line(comp: Comparison) -> str:
 
 
 def _verdict(comp: Comparison) -> str:
+    if comp.must_pass_blockers:
+        return f"BLOCKED BY MUST-PASS CASES ({len(comp.must_pass_blockers)})"
     if comp.regressions:
         return f"REGRESSIONS FOUND ({len(comp.regressions)})"
     return "NO REGRESSIONS"
@@ -127,6 +129,20 @@ def render_comparison(comp: Comparison, fmt: str = "text") -> str:
     return _render_text(comp)
 
 
+def _blocking_lines(comp: Comparison, markdown: bool = False) -> list[str]:
+    if not comp.must_pass_blockers:
+        return []
+    title = "Blocked by must-pass cases"
+    lines = ["", "## " + title if markdown else title + ":"]
+    for case in comp.must_pass_blockers:
+        label = f"- `{case.case_id}`" if markdown else f"  {case.case_id}"
+        detail = _short(case.candidate_reason)
+        if markdown:
+            detail = _md_cell(detail)
+        lines.append(f"{label}: {case.blocking_reason}" + (f" — {detail}" if detail else ""))
+    return lines
+
+
 def _render_text(comp: Comparison) -> str:
     lines = [
         f"ModelDiff comparison: {comp.suite}",
@@ -143,6 +159,7 @@ def _render_text(comp: Comparison) -> str:
             reason = f": {_short(c.candidate_reason)}" if show_reason and c.candidate_reason else ""
             lines.append(f"  {c.case_id} [{c.type}] {_transition(c)}{reason}")
 
+    lines.extend(_blocking_lines(comp))
     section("Regressions", comp.regressions)
     section("Fixed", comp.by_category("fixed"), show_reason=False)
     section("Still failing", comp.by_category("still_failing"))
@@ -181,6 +198,10 @@ def _render_markdown(comp: Comparison) -> str:
         f"- Result: **{_verdict(comp)}**",
         f"- {_summary_line(comp)}",
         "",
+    ]
+    lines.extend(_blocking_lines(comp, markdown=True))
+    lines += [
+        "",
         "| Case | Type | Change | Output changed | Latency | Candidate reason |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
@@ -197,7 +218,7 @@ def _render_markdown(comp: Comparison) -> str:
             )
         )
     }
-    for c in sorted(comp.cases, key=lambda c: order[c.category]):
+    for c in sorted(comp.cases, key=lambda c: (c.blocking_reason is None, order[c.category])):
         changed = {True: "yes", False: "no", None: "unknown"}[c.output_changed]
         if c.label_change:
             changed += f" (`{c.label_change[0]}` -> `{c.label_change[1]}`)"
@@ -234,7 +255,19 @@ def _render_junit(comp: Comparison) -> str:
     errors = 0
     skipped = 0
 
-    for case in comp.cases:
+    blockers = comp.must_pass_blockers
+    if blockers:
+        properties = ET.SubElement(root, "properties")
+        ET.SubElement(
+            properties,
+            "property",
+            {
+                "name": "Blocked by must-pass cases",
+                "value": "; ".join(f"{case.case_id}: {case.blocking_reason}" for case in blockers),
+            },
+        )
+    ordered = blockers + [case for case in comp.cases if case.blocking_reason is None]
+    for case in ordered:
         attributes = {
             "classname": comp.suite,
             "name": case.case_id,
@@ -246,7 +279,17 @@ def _render_junit(comp: Comparison) -> str:
 
         testcase = ET.SubElement(root, "testcase", attributes)
 
-        if case.category == "still_failing":
+        if case.blocking_reason is not None:
+            reason = f"must-pass {case.blocking_reason}"
+            if case.candidate_reason:
+                reason += ": " + case.candidate_reason
+            tag = "error" if case.candidate_status == "error" else "failure"
+            element = ET.SubElement(testcase, tag, {"message": reason, "type": "must_pass"})
+            element.text = reason
+            errors += tag == "error"
+            failures += tag == "failure"
+
+        elif case.category == "still_failing":
             reason = case.candidate_reason or "Case is still failing"
             element = ET.SubElement(
                 testcase,

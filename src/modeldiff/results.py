@@ -53,6 +53,7 @@ RESULT_SCHEMA: dict[str, Any] = {
                     "timestamp": {"type": "string"},
                     "provider_metadata": {"type": "object"},
                     "tags": {"type": "array", "items": {"type": "string"}},
+                    "must_pass": {"type": "boolean"},
                 },
             },
         },
@@ -78,6 +79,7 @@ class CaseResult:
     provider_metadata: dict[str, Any] = field(default_factory=dict)
     tags: list[str] = field(default_factory=list)
     case_sha256: str | None = None
+    must_pass: bool = False
 
 
 @dataclass
@@ -108,6 +110,9 @@ class RunResult:
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
+        for record in data["results"]:
+            if record["must_pass"] is False:
+                del record["must_pass"]
         # Keep "format" first so the file identifies itself at a glance.
         return {"format": data.pop("format"), **data}
 

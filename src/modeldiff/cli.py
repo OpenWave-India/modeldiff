@@ -1,8 +1,8 @@
 """Command-line interface.
 
 Exit codes:
-  0  success (for ``compare``: no regressions)
-  1  regressions found, or failures when ``run --fail-on-failure`` is used
+  0  success (for ``compare``: no regressions or must-pass blockers)
+  1  regressions or must-pass blockers found, or failures when ``run --fail-on-failure`` is used
   2  invalid input: malformed suite, config, or result file, or bad arguments
 """
 
@@ -125,7 +125,11 @@ def cmd_compare(args: argparse.Namespace) -> int:
     _emit(render_comparison(comparison, args.format), args.output)
     if args.exit_zero:
         return EXIT_OK
-    failed = bool(comparison.regressions) or (args.fail_on_latency and bool(comparison.slowdowns))
+    failed = (
+        bool(comparison.regressions)
+        or bool(comparison.must_pass_blockers)
+        or (args.fail_on_latency and bool(comparison.slowdowns))
+    )
     return EXIT_REGRESSION if failed else EXIT_OK
 
 
