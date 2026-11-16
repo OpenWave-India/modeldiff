@@ -52,6 +52,7 @@ def run_case(
             reason="provider error",
             error=str(exc),
             tags=list(case.tags),
+            must_pass=case.must_pass,
             case_sha256=case.sha256,
         )
     elapsed_ms = (time.perf_counter() - start) * 1000
@@ -104,6 +105,7 @@ def run_case(
         error=error,
         provider_metadata=response.metadata,
         tags=list(case.tags),
+        must_pass=case.must_pass,
         case_sha256=case.sha256,
     )
 

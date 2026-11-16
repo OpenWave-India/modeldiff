@@ -45,6 +45,18 @@ class CaseComparison:
     slowdown: bool = False
     baseline_warnings: list[str] = field(default_factory=list)
     candidate_warnings: list[str] = field(default_factory=list)
+    must_pass: bool = False
+
+    @property
+    def blocking_reason(self) -> str | None:
+        """Why this required case blocks release, independently of aggregate improvement."""
+        if not self.must_pass or self.candidate_status == "pass":
+            return None
+        if self.candidate_status is None:
+            return "missing"
+        if self.candidate_status == "error":
+            return "error"
+        return "regression" if self.category == "regression" else "still failing"
 
     @property
     def duration_delta_ms(self) -> float | None:
@@ -78,6 +90,11 @@ class Comparison:
     latency_threshold_pct: float | None = None
     suite_mismatch: bool = False
     notes: list[str] = field(default_factory=list)
+
+    @property
+    def must_pass_blockers(self) -> list[CaseComparison]:
+        """Required cases that do not pass in the candidate, including absent results."""
+        return [case for case in self.cases if case.blocking_reason is not None]
 
     def by_category(self, category: str) -> list[CaseComparison]:
         return [c for c in self.cases if c.category == category]
@@ -113,12 +130,28 @@ class Comparison:
             "slowdowns": len(self.slowdowns),
         }
         for case_dict, case in zip(data["cases"], self.cases, strict=True):
+            if not case.must_pass:
+                del case_dict["must_pass"]
             case_dict["duration_delta_ms"] = case.duration_delta_ms
             if case.label_change is not None:
                 case_dict["label_change"] = {
                     "from": case.label_change[0],
                     "to": case.label_change[1],
                 }
+        if self.must_pass_blockers:
+            data = {
+                "blocked_by_must_pass": [
+                    {
+                        "case_id": case.case_id,
+                        "reason": case.blocking_reason,
+                        "candidate_reason": case.candidate_reason,
+                    }
+                    for case in self.must_pass_blockers
+                ],
+                **data,
+            }
+            blocking_ids = {case.case_id for case in self.must_pass_blockers}
+            data["cases"].sort(key=lambda case: case["case_id"] not in blocking_ids)
         if self.latency is not None:
             data["latency"]["change_pct"] = self.latency.change_pct
         return data
@@ -207,6 +240,7 @@ def compare_runs(
         comp = CaseComparison(
             case_id=case_id,
             type=ref.type,
+            must_pass=bool((base and base.must_pass) or (cand and cand.must_pass)),
             category=_category(base, cand),
             baseline_status=base.status if base else None,
             candidate_status=cand.status if cand else None,

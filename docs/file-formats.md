@@ -50,6 +50,7 @@ Optional case fields:
 | `params` | object | No | Parameters passed to a custom check. Defaults to an empty object. |
 | `options` | object | No | Options used by supported checks. Defaults to an empty object. |
 | `tags` | array of strings | No | Labels used to organize or select cases. Defaults to an empty array. |
+| `must_pass` | boolean | No | Require this case to pass in the candidate. Defaults to false. |
 | `metadata` | object | No | User-supplied metadata. Defaults to an empty object; it is not interpreted as a check by itself. |
 | `generation` | object | No | Generation options passed to the provider. For Ollama, case-level generation settings override the configuration's options. Defaults to an empty object. |
 | `performance` | object | No | Performance constraints. Currently supports `max_latency_ms`, a number greater than zero. Unknown keys inside this object are rejected. |
@@ -263,6 +264,7 @@ Optional case-result fields:
 | `error` | string or null | No | Error information when execution or evaluation errors. |
 | `provider_metadata` | object | No | Metadata returned by the provider. Defaults to an empty object. |
 | `tags` | array of strings | No | Tags associated with the case. Defaults to an empty array. |
+| `must_pass` | boolean | No | Carried from the case; absent in old files means false. |
 
 The reader validates the documented types and required fields. The `CaseResult` and `RunResult` constructors also define defaults for optional values; see their dataclasses in `src/modeldiff/results.py`.
 
@@ -398,3 +400,21 @@ By default, ModelDiff refuses to compare runs with different suite names or diff
 - [README](../README.md) — quickstart, case types, configuration, CLI, result capture, and measurements.
 - [Contributing guide](../CONTRIBUTING.md) — development setup, checks, and contribution expectations.
 - [Architecture](architecture.md) — module responsibilities and design decisions.
+
+### Must-pass comparison blockers
+
+A result with `must_pass: true` in either run requires the candidate case to pass. The optional
+`blocked_by_must_pass` comparison field lists `case_id`, `reason`, and `candidate_reason` for
+blockers. Reasons are `regression`, `still failing`, `error`, or `missing`; error and missing
+statuses take precedence over the ordinary comparison category. The flag does not change
+category counts. Blocking records appear first in JSON's `cases` list and all human reports.
+When there are no blockers, the extra comparison section is omitted.
+
+Run results and per-case comparisons serialize `must_pass` only when true. Old files continue
+to load without it, and false/omitted suite flags retain legacy case and suite hashes. True
+changes the definition hash; re-run both configurations with the same suite as for any rule
+change. `compare --exit-zero` still returns zero for report-only use.
+
+JUnit includes a `Blocked by must-pass cases` property with case IDs and reasons. Blocking
+cases are ordered first and get a `failure` or `error` element of type `must_pass`, including a
+failure for a missing required candidate. Other cases retain their previous JUnit behavior.

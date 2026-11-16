@@ -48,6 +48,7 @@ SUITE_SCHEMA: dict[str, Any] = {
                 "params": {"type": "object"},
                 "options": {"type": "object"},
                 "tags": {"type": "array", "items": {"type": "string"}},
+                "must_pass": {"type": "boolean"},
                 "metadata": {"type": "object"},
                 "generation": {"type": "object"},
                 "performance": {
@@ -82,6 +83,7 @@ class TestCase:
     metadata: dict[str, Any] = field(default_factory=dict)
     generation: dict[str, Any] = field(default_factory=dict)
     performance: dict[str, Any] = field(default_factory=dict)
+    must_pass: bool = False
 
     @property
     def sha256(self) -> str:
@@ -124,7 +126,11 @@ class Suite:
 
 
 def _case_to_dict(case: TestCase) -> dict[str, Any]:
-    return {k: v for k, v in case.__dict__.items() if v not in (None, {}, [])}
+    return {
+        k: v
+        for k, v in case.__dict__.items()
+        if v not in (None, {}, []) and not (k == "must_pass" and v is False)
+    }
 
 
 def read_document(path: Path) -> Any:

@@ -396,6 +396,32 @@ The adapter calls `POST /api/generate` with `stream: false`. Token counts and du
 
 To compare two quantizations, point two configs at two model tags, run both, and compare the result files. Set a fixed `seed` and `temperature: 0` to reduce run-to-run variation. Even so, some runtimes are not bit-for-bit deterministic, so run a config against itself to see how much noise to expect.
 
+## Must-pass release cases
+
+Mark a case with `must_pass: true` when passing it is a release promise:
+
+```yaml
+suite: release
+cases:
+  - id: required-json
+    type: json
+    input: Return valid JSON.
+    must_pass: true
+```
+
+Run both configurations with the same marked suite. `compare` exits 1 if a must-pass case
+regresses, is still failing, errors, or is missing from the candidate, even when other cases
+improve. Text and Markdown start with a **Blocked by must-pass cases** section naming each
+case and reason; JSON includes `blocked_by_must_pass`, and JUnit puts blocking cases first
+with a named property and failure/error elements. A missing required candidate is a failure,
+not a skipped JUnit case.
+
+The flag is optional and defaults to false. Existing suites and result files remain valid;
+ordinary still-failing and missing cases keep their previous CLI behavior. The flag is carried
+in result files, and a baseline's requirement cannot be relaxed by an unmarked candidate.
+`--exit-zero` remains an explicit report-only override. A false or omitted flag does not change
+legacy definition hashes; marking a case true changes its definition hash like any other rule.
+
 ## CLI reference
 
 ```
@@ -428,8 +454,8 @@ modeldiff validate suites/support.yaml suites/billing.yaml --plugin checks.py
 
 | Exit code | Meaning |
 | --- | --- |
-| 0 | Success. For `compare`, no regressions. |
-| 1 | `compare` found regressions (or flagged slowdowns with `--fail-on-latency`); `run --fail-on-failure` saw a failing or erroring case. |
+| 0 | Success. For `compare`, no regressions or must-pass blockers. |
+| 1 | `compare` found regressions or must-pass blockers (or flagged slowdowns with `--fail-on-latency`); `run --fail-on-failure` saw a failing or erroring case. |
 | 2 | Invalid input: malformed suite, config, or result file, or bad arguments. |
 
 Comparison reports show candidate per-case warnings, with `(new)` marking warnings absent from the baseline. JSON comparisons include `baseline_warnings` and `candidate_warnings` for every case. Warnings do not change regression counts or exit codes.
