@@ -6,6 +6,7 @@ All notable changes to ModelDiff are listed here. The format follows [Keep a Cha
 
 ### Added
 
+- `modeldiff init DIRECTORY` creates a ready-to-run starter project: a two-case suite, two replay configurations and labelled placeholder outputs that compare cleanly offline. It refuses a non-empty directory unless `--force` is given, and never deletes existing files (#47, @Aaqibhafeezkhan, fixes #42).
 - `required_fields` paths can address keys that contain dots: `\.` is a literal dot and `\\` a literal backslash, for example `metadata.app\.version` (#46, @Mrun25, fixes #31).
 - `examples/multilingual`, a Hindi and Tamil example suite with hand-written replay fixtures, three regressions and one passing output change. The Tamil wording still needs a native speaker's review (#48) (#45, @tnalbant, fixes #28).
 
